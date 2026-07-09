@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "index.ts",
   "dependencies": {
+    "@nozbe/watermelondb": "^0.28.0",
     "big.js": "^7.0.1",
     "date-fns": "^4.4.0",
     "expo": "~57.0.4",
