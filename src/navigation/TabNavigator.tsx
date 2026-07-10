@@ -4,7 +4,9 @@ import { View, Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Home, Clock, Calendar, LayoutGrid, Settings } from 'lucide-react-native';
 import { TabParamList } from './types';
+
 import HomeScreen from '../features/home/HomeScreen';
+import SettingsScreen from '../features/settings/SettingsScreen';
 
 const Tab = createBottomTabNavigator<TabParamList>();
 
@@ -59,12 +61,12 @@ export default function TabNavigator() {
       />
       <Tab.Screen 
         name="Settings" 
-        component={SettingsDummy} 
+        component={SettingsScreen} // <- Αντικατάσταση του SettingsDummy!
         options={{
           title: t('navigation.settings'),
           tabBarIcon: ({ color, size }) => <Settings color={color} size={size} />,
         }}
-      />
+/>
     </Tab.Navigator>
   );
 }

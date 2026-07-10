@@ -2,42 +2,47 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { zustandStorage } from './mmkv';
 
-// Ορισμός των τύπων για το State της εφαρμογής
+// Ορισμός του Interface για πλήρη υποστήριξη TypeScript
 interface AppState {
-  language: 'en' | 'gr';
-  currency: string;
   theme: 'light' | 'dark';
-  hideBalance: boolean;
-  trading212ApiKey: string | null;
-  
-  // Actions για την τροποποίηση του state
-  setLanguage: (lang: 'en' | 'gr') => void;
-  setCurrency: (currency: string) => void;
   setTheme: (theme: 'light' | 'dark') => void;
+  currency: string;
+  setCurrency: (currency: string) => void;
+  language: 'en' | 'gr';
+  setLanguage: (language: 'en' | 'gr') => void;
+  hideBalance: boolean;
   toggleHideBalance: () => void;
-  setTrading212ApiKey: (key: string | null) => void;
+  
+  // Νέες ιδιότητες για Security & API
+  trading212Key: string;
+  setTrading212Key: (key: string) => void;
+  biometricsEnabled: boolean;
+  toggleBiometrics: () => void;
 }
 
 export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
-      // Αρχικές / Default τιμές
-      language: 'gr',
-      currency: 'EUR',
+      // Αρχικές τιμές (Defaults)[cite: 1]
       theme: 'light',
+      currency: '€',
+      language: 'gr',
       hideBalance: false,
-      trading212ApiKey: null,
+      trading212Key: '',
+      biometricsEnabled: false,
 
-      // Υλοποίηση των Actions
-      setLanguage: (language) => set({ language }),
-      setCurrency: (currency) => set({ currency }),
+      // Actions / Setters[cite: 1]
       setTheme: (theme) => set({ theme }),
+      setCurrency: (currency) => set({ currency }),
+      setLanguage: (language) => set({ language }),
       toggleHideBalance: () => set((state) => ({ hideBalance: !state.hideBalance })),
-      setTrading212ApiKey: (trading212ApiKey) => set({ trading212ApiKey }),
+      
+      setTrading212Key: (trading212Key) => set({ trading212Key }),
+      toggleBiometrics: () => set((state) => ({ biometricsEnabled: !state.biometricsEnabled })),
     }),
     {
-      name: 'kaseri-app-settings', // Το κλειδί με το οποίο θα αποθηκευτεί στο MMKV
-      storage: createJSONStorage(() => zustandStorage), // Σύνδεση με το MMKV storage
+      name: 'kaseri-app-storage', // Μοναδικό όνομα για το MMKV storage key
+      storage: createJSONStorage(() => zustandStorage), // Σύνδεση με το MMKV adapter μας
     }
   )
 );
