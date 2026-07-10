@@ -18,7 +18,7 @@ export default function TabNavigator() {
   return (
     <Tab.Navigator
       screenOptions={{
-        headerShown: true,
+        headerShown: false,
         tabBarActiveTintColor: '#007AFF', // Μπορείς να το αλλάξεις ανάλογα με το theme σου
         tabBarInactiveTintColor: 'gray',
       }}
