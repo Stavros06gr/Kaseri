@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import { Text, Surface } from 'react-native-paper';
-import { Eye, EyeOff, Edit2, TrendingUp, TrendingDown } from 'lucide-react-native';
+import { Eye, EyeOff, Edit2, Trash2, TrendingUp, TrendingDown } from 'lucide-react-native';
 import { formatMoney } from '../../../utils/math';
 
 interface Props {
@@ -9,16 +9,17 @@ interface Props {
   balance: number;
   income30Days: number;
   expense30Days: number;
-  isHidden: boolean; // <- Αλλαγή από hideBalance σε isHidden
+  isHidden: boolean;
   onToggleHide: () => void;
   onEditBalance: () => void;
+  onDeleteWallet: () => void; // <- Προσθήκη του Delete Prop
   currency: string;
   isDark: boolean;
   t: (key: string, defaultText: string) => string;
 }
 
 export default function WalletDetailHeader({
-  walletName, balance, income30Days, expense30Days, isHidden, onToggleHide, onEditBalance, currency, isDark, t
+  walletName, balance, income30Days, expense30Days, isHidden, onToggleHide, onEditBalance, onDeleteWallet, currency, isDark, t
 }: Props) {
   const styles = getStyles(isDark);
 
@@ -26,13 +27,17 @@ export default function WalletDetailHeader({
     <View style={styles.container}>
       {/* WALLET NAME & ACTIONS */}
       <View style={styles.headerTopRow}>
-        <Text style={styles.walletName}>{walletName}</Text>
+        <Text style={styles.walletName} numberOfLines={1}>{walletName}</Text>
         <View style={styles.actionsWrapper}>
           <TouchableOpacity onPress={onEditBalance} style={styles.actionIconClick} hitSlop={10}>
             <Edit2 size={18} color={styles.textMuted.color} />
           </TouchableOpacity>
           <TouchableOpacity onPress={onToggleHide} style={styles.actionIconClick} hitSlop={10}>
             {isHidden ? <EyeOff size={19} color={styles.textMuted.color} /> : <Eye size={19} color={styles.textMuted.color} />}
+          </TouchableOpacity>
+          {/* ΚΟΥΜΠΙ ΔΙΑΓΡΑΦΗΣ */}
+          <TouchableOpacity onPress={onDeleteWallet} style={styles.actionIconClick} hitSlop={10}>
+            <Trash2 size={18} color="#EF4444" />
           </TouchableOpacity>
         </View>
       </View>
@@ -79,9 +84,9 @@ export default function WalletDetailHeader({
 const getStyles = (isDark: boolean) => StyleSheet.create({
   container: { marginBottom: 8 },
   headerTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, paddingHorizontal: 4 },
-  walletName: { fontSize: 24, fontWeight: '700', color: isDark ? '#FFFFFF' : '#111827', letterSpacing: -0.5 },
+  walletName: { fontSize: 24, fontWeight: '700', color: isDark ? '#FFFFFF' : '#111827', letterSpacing: -0.5, flex: 1, marginRight: 8 },
   actionsWrapper: { flexDirection: 'row', alignItems: 'center' },
-  actionIconClick: { marginLeft: 16, padding: 4 },
+  actionIconClick: { marginLeft: 14, padding: 4 },
   card: { padding: 20, borderRadius: 24, marginBottom: 24, backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF' },
   balanceTitle: { fontSize: 13, fontWeight: '500', textTransform: 'uppercase', letterSpacing: 0.5, color: isDark ? '#9CA3AF' : '#6B7280' },
   balanceAmount: { fontSize: 32, fontWeight: '700', marginTop: 4, letterSpacing: -0.5, color: isDark ? '#FFFFFF' : '#111827' },

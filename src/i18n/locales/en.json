@@ -40,7 +40,9 @@
     "historyTitle": "Wallet History",
     "editBalanceTitle": "Edit Wallet Balance",
     "balanceLabel": "New Balance Amount",
-    "invalidBalance": "Please enter a valid number"
+    "invalidBalance": "Please enter a valid number",
+    "deleteTitle": "Delete Wallet",
+    "deleteConfirmation": "Are you sure you want to permanently delete this wallet? This action cannot be undone."
   },
   "transactions": {
     "income": "Income",

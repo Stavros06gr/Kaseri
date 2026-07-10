@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Alert } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useRoute, useNavigation, useIsFocused, RouteProp } from '@react-navigation/native';
+import { useRoute, useNavigation, useIsFocused } from '@react-navigation/native';
+import { RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
 import { Q } from '@nozbe/watermelondb';
 import { subDays } from 'date-fns';
-import { Portal, Dialog, TextInput, Button } from 'react-native-paper';
+import { Portal, Dialog, TextInput, Button, Text } from 'react-native-paper';
 
 import { database } from '../../database';
 import { useAppStore } from '../../store/useAppStore';
@@ -40,8 +41,9 @@ export default function WalletDetailScreen() {
   const [income30Days, setIncome30Days] = useState(0);
   const [expense30Days, setExpense30Days] = useState(0);
 
-  // Popup Window States
+  // Popups States
   const [isDialogVisible, setIsDialogVisible] = useState(false);
+  const [isDeleteDialogVisible, setIsDeleteDialogVisible] = useState(false); // <- Νέο State
   const [editBalanceInput, setEditBalanceInput] = useState('');
 
   useEffect(() => {
@@ -77,7 +79,6 @@ export default function WalletDetailScreen() {
     }
   };
 
-  // Ενημέρωση της κατάστασης απόκρυψης στη WatermelonDB
   const handleToggleHide = async () => {
     if (!wallet) return;
     try {
@@ -92,7 +93,6 @@ export default function WalletDetailScreen() {
     }
   };
 
-  // Αποθήκευση του νέου υπολοίπου από το Popup Window
   const handleSaveBalance = async () => {
     if (!wallet) return;
     const newBalance = parseFloat(editBalanceInput);
@@ -114,6 +114,21 @@ export default function WalletDetailScreen() {
     }
   };
 
+  // ΜΟΝΙΜΗ ΔΙΑΓΡΑΦΗ ΠΟΡΤΟΦΟΛΙΟΥ
+  const handleConfirmDeleteWallet = async () => {
+    if (!wallet) return;
+    try {
+      await database.write(async () => {
+        await wallet.destroyPermanently(); // Διαγραφή από τη WatermelonDB
+      });
+      setIsDeleteDialogVisible(false);
+      navigation.goBack(); // Επιστροφή στην κεντρική λίστα
+    } catch (error) {
+      console.error('Failed to delete wallet:', error);
+      Alert.alert('Error', 'Could not delete wallet.');
+    }
+  };
+
   if (!wallet) return null;
 
   return (
@@ -129,9 +144,10 @@ export default function WalletDetailScreen() {
             balance={wallet.balance}
             income30Days={income30Days}
             expense30Days={expense30Days}
-            isHidden={wallet.isHidden} // <- Χρήση του πεδίου από τη βάση
+            isHidden={wallet.isHidden}
             onToggleHide={handleToggleHide}
             onEditBalance={() => setIsDialogVisible(true)}
+            onDeleteWallet={() => setIsDeleteDialogVisible(true)} // <- Σύνδεση με το popup
             currency={currency}
             isDark={isDark}
             t={t}
@@ -151,14 +167,8 @@ export default function WalletDetailScreen() {
 
       {/* POP-UP WINDOW ΓΙΑ EDIT BALANCE */}
       <Portal>
-        <Dialog 
-          visible={isDialogVisible} 
-          onDismiss={() => setIsDialogVisible(false)}
-          style={{ backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF' }}
-        >
-          <Dialog.Title style={{ color: isDark ? '#FFFFFF' : '#111827' }}>
-            {t('wallets.editBalanceTitle', 'Edit Balance')}
-          </Dialog.Title>
+        <Dialog visible={isDialogVisible} onDismiss={() => setIsDialogVisible(false)} style={{ backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF' }}>
+          <Dialog.Title style={{ color: isDark ? '#FFFFFF' : '#111827' }}>{t('wallets.editBalanceTitle', 'Edit Balance')}</Dialog.Title>
           <Dialog.Content>
             <TextInput
               label={t('wallets.balanceLabel', 'New Balance')}
@@ -173,11 +183,29 @@ export default function WalletDetailScreen() {
             />
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setIsDialogVisible(false)} textColor="#EF4444">
+            <Button onPress={() => setIsDialogVisible(false)} textColor="#EF4444">{t('common.cancel', 'Cancel')}</Button>
+            <Button onPress={handleSaveBalance} textColor="#2563EB">{t('common.save', 'Save')}</Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+
+      {/* POP-UP WINDOW ΓΙΑ ΕΠΙΒΕΒΑΙΩΣΗ ΔΙΑΓΡΑΦΗΣ */}
+      <Portal>
+        <Dialog visible={isDeleteDialogVisible} onDismiss={() => setIsDeleteDialogVisible(false)} style={{ backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF' }}>
+          <Dialog.Title style={{ color: isDark ? '#FFFFFF' : '#111827' }}>
+            {t('wallets.deleteTitle', 'Delete Wallet')}
+          </Dialog.Title>
+          <Dialog.Content>
+            <Text style={{ color: isDark ? '#9CA3AF' : '#4B5563', fontSize: 15 }}>
+              {t('wallets.deleteConfirmation', 'Are you sure you want to delete this wallet? This action cannot be undone.')}
+            </Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setIsDeleteDialogVisible(false)} textColor={isDark ? '#9CA3AF' : '#6B7280'}>
               {t('common.cancel', 'Cancel')}
             </Button>
-            <Button onPress={handleSaveBalance} textColor="#2563EB">
-              {t('common.save', 'Save')}
+            <Button onPress={handleConfirmDeleteWallet} textColor="#EF4444" labelStyle={{ fontWeight: '700' }}>
+              OK
             </Button>
           </Dialog.Actions>
         </Dialog>
