@@ -1,43 +1,67 @@
 import React, { useState, useEffect } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { View, Text, Button } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { Text, Surface } from 'react-native-paper';
+import { Fingerprint } from 'lucide-react-native';
+
 import { RootStackParamList } from './types';
 import TabNavigator from './TabNavigator';
-import { useAppStore } from '../store/useAppStore'; // Εισαγωγή του Zustand store
+import { useAppStore } from '../store/useAppStore'; // [cite: 285]
+import { useBiometrics } from '../hooks/useBiometrics'; // 
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-const LockScreenPlaceholder = ({ onUnlock }: { onUnlock: () => void }) => (
-  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#121212' }}>
-    <Text style={{ color: 'white', marginBottom: 20, fontSize: 18 }}>Kaseri is Locked 🔒</Text>
-    <Button title="Unlock with Fingerprint" onPress={onUnlock} />
-  </View>
-);
+// ΟΘΟΝΗ ΚΛΕΙΔΩΜΑΤΟΣ (LOCK SCREEN)
+const LockScreen = ({ onUnlock }: { onUnlock: () => void }) => {
+  const { requestAuthentication } = useBiometrics();
+
+  const triggerAuth = async () => {
+    const success = await requestAuthentication('Confirm identity to open Kaseri');
+    if (success) {
+      onUnlock();
+    }
+  };
+
+  // Αυτόματο άνοιγμα του Fingerprint prompt μόλις εμφανιστεί η οθόνη
+  useEffect(() => {
+    triggerAuth();
+  }, []);
+
+  return (
+    <View style={styles.lockContainer}>
+      <Surface style={styles.lockCard} mode="flat">
+        <Fingerprint size={48} color="#2563EB" style={styles.icon} />
+        <Text style={styles.lockTitle}>Kaseri is Locked</Text>
+        <Text style={styles.lockSubtitle}>Please authenticate using your fingerprint to proceed.</Text>
+        
+        <TouchableOpacity style={styles.retryBtn} onPress={triggerAuth}>
+          <Text style={styles.retryText}>Try Again</Text>
+        </TouchableOpacity>
+      </Surface>
+    </View>
+  );
+};
 
 // Σταθερά dummy components για τις υπόλοιπες οθόνες
-const WalletDetailDummy = () => <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><Text>Wallet Detail</Text></View>;
-const IncomeDummy = () => <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><Text>Add Income</Text></View>;
-const ExpenseDummy = () => <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><Text>Add Expense</Text></View>;
-const TransferDummy = () => <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><Text>Transfer Money</Text></View>;
-const EditTransactionDummy = () => <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><Text>Edit Transaction</Text></View>;
-const MonthlySummariesDummy = () => <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><Text>Monthly Summaries</Text></View>;
-const MonthlySummaryDetailDummy = () => <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><Text>Monthly Summary Detail</Text></View>;
-const SavingGoalDetailDummy = () => <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><Text>Saving Goal Detail</Text></View>;
-const SavingTransferDummy = () => <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><Text>Saving Transfer</Text></View>;
-const TripDetailDummy = () => <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><Text>Trip Detail</Text></View>;
-const OwnDummy = () => <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><Text>Debts (Own)</Text></View>;
-const FuelCalculatorDummy = () => <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><Text>Fuel Calculator</Text></View>;
-const SubscriptionManagerDummy = () => <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><Text>Subscription Manager</Text></View>;
-const CategoryStatisticsDummy = () => <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><Text>Category Statistics</Text></View>;
+const WalletDetailDummy = () => <View style={styles.dummy}><Text>Wallet Detail</Text></View>;
+const IncomeDummy = () => <View style={styles.dummy}><Text>Add Income</Text></View>;
+const ExpenseDummy = () => <View style={styles.dummy}><Text>Add Expense</Text></View>;
+const TransferDummy = () => <View style={styles.dummy}><Text>Transfer Money</Text></View>;
+const EditTransactionDummy = () => <View style={styles.dummy}><Text>Edit Transaction</Text></View>;
+const MonthlySummariesDummy = () => <View style={styles.dummy}><Text>Monthly Summaries</Text></View>;
+const MonthlySummaryDetailDummy = () => <View style={styles.dummy}><Text>Monthly Summary Detail</Text></View>;
+const SavingGoalDetailDummy = () => <View style={styles.dummy}><Text>Saving Goal Detail</Text></View>;
+const SavingTransferDummy = () => <View style={styles.dummy}><Text>Saving Transfer</Text></View>;
+const TripDetailDummy = () => <View style={styles.dummy}><Text>Trip Detail</Text></View>;
+const OwnDummy = () => <View style={styles.dummy}><Text>Debts (Own)</Text></View>;
+const FuelCalculatorDummy = () => <View style={styles.dummy}><Text>Fuel Calculator</Text></View>;
+const SubscriptionManagerDummy = () => <View style={styles.dummy}><Text>Subscription Manager</Text></View>;
+const CategoryStatisticsDummy = () => <View style={styles.dummy}><Text>Category Statistics</Text></View>;
 
 export default function RootNavigator() {
-  // Διαβάζουμε αν το fingerprint είναι ενεργοποιημένο από τις ρυθμίσεις
-  const { biometricsEnabled } = useAppStore();
-  
-  // Αρχικοποιούμε το lock state με βάση τη ρύθμιση του store
+  const { biometricsEnabled } = useAppStore(); // [cite: 285]
   const [isLocked, setIsLocked] = useState<boolean>(biometricsEnabled); 
 
-  // Αν ο χρήστης απενεργοποιήσει το fingerprint από τα settings, ξεκλειδώνουμε αμέσως
   useEffect(() => {
     if (!biometricsEnabled) {
       setIsLocked(false);
@@ -45,7 +69,7 @@ export default function RootNavigator() {
   }, [biometricsEnabled]);
 
   if (isLocked) {
-    return <LockScreenPlaceholder onUnlock={() => setIsLocked(false)} />;
+    return <LockScreen onUnlock={() => setIsLocked(false)} />;
   }
 
   return (
@@ -68,3 +92,52 @@ export default function RootNavigator() {
     </Stack.Navigator>
   );
 }
+
+const styles = StyleSheet.create({
+  lockContainer: {
+    flex: 1,
+    backgroundColor: '#121212',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  lockCard: {
+    backgroundColor: '#1E1E1E',
+    borderRadius: 24,
+    padding: 32,
+    alignItems: 'center',
+  },
+  icon: {
+    marginBottom: 16,
+  },
+  lockTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 8,
+  },
+  lockSubtitle: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 20,
+  },
+  retryBtn: {
+    backgroundColor: '#2563EB',
+    paddingVertical: 12,
+    paddingHorizontal: 28,
+    borderRadius: 14,
+    width: '100%',
+    alignItems: 'center',
+  },
+  retryText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  dummy: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});
