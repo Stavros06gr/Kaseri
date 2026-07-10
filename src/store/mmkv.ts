@@ -1,11 +1,10 @@
-// import { MMKV } from 'react-native-mmkv';
-const { MMKV } = require('react-native-mmkv');
 import { StateStorage } from 'zustand/middleware';
+import { createMMKV } from 'react-native-mmkv';
 
-// Δημιουργία του κεντρικού instance για το MMKV
-export const storage = new MMKV();
+// Στην v4 χρησιμοποιούμε τη συνάρτηση createMMKV() αντί για το 'new MMKV()'
+export const storage = createMMKV();
 
-// Custom adapter ώστε το Zustand να μπορεί να διαβάζει/γράφει στο MMKV
+// Custom storage adapter για το Zustand Persist middleware
 export const zustandStorage: StateStorage = {
   setItem: (name, value) => {
     return storage.set(name, value);
@@ -15,6 +14,7 @@ export const zustandStorage: StateStorage = {
     return value ?? null;
   },
   removeItem: (name) => {
-    return storage.delete(name);
+    // Στην v4 η μέθοδος .delete() μετονομάστηκε σε .remove()
+    return storage.remove(name);
   },
 };
