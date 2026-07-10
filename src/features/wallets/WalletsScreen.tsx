@@ -21,7 +21,7 @@ export default function WalletsScreen() {
   const isFocused = useIsFocused();
   const insets = useSafeAreaInsets();
 
-  const { currency, theme, hideBalance } = useAppStore();
+  const { currency, theme } = useAppStore();
   const isDark = theme === 'dark';
 
   // States
@@ -45,7 +45,21 @@ export default function WalletsScreen() {
     }
   };
 
-  // Δημιουργία Νέου Πορτοφολιού στη WatermelonDB
+  // Εναλλαγή ορατότητας (Hide/Unhide) απευθείας από τη λίστα
+  const handleToggleHideWallet = async (wallet: WalletModel) => {
+    try {
+      await database.write(async () => {
+        await wallet.update((w: any) => {
+          w.isHidden = !w.isHidden;
+        });
+      });
+      loadWallets(); // Άμεση ανανέωση της λίστας στην οθόνη
+    } catch (error) {
+      console.error('Failed to toggle wallet visibility:', error);
+    }
+  };
+
+  // Δημιουργία Νέου Πορτοφολιού
   const handleAddWallet = async () => {
     if (!newWalletName.trim()) return;
 
@@ -62,11 +76,10 @@ export default function WalletsScreen() {
         });
       });
 
-      // Reset & Κλείσιμο
       setNewWalletName('');
       setNewWalletBalance('');
       setIsDialogVisible(false);
-      loadWallets(); // Ανανέωση λίστας
+      loadWallets();
     } catch (error) {
       console.error('Failed to create wallet:', error);
     }
@@ -95,53 +108,72 @@ export default function WalletsScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* WALLETS FLAT LIST[cite: 1] */}
+      {/* WALLETS LIST */}
       <FlatList
         data={wallets}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         renderItem={({ item }) => (
           <Surface style={[styles.walletCard, dynamicStyles.card]} mode="flat">
-            <TouchableOpacity 
-              style={styles.cardClickable}
-              onPress={() => navigation.navigate('WalletDetail', { walletId: item.id })} // <- Σύνδεση με WalletDetail![cite: 1]
-            >
-              <View style={styles.leftInfo}>
+            <View style={styles.cardContentRow}>
+              
+              {/* Αριστερό Κομμάτι: Πληροφορίες & Πλοήγηση */}
+              <TouchableOpacity 
+                style={styles.infoTouchArea}
+                onPress={() => navigation.navigate('WalletDetail', { walletId: item.id })}
+                activeOpacity={0.7}
+              >
                 <View style={styles.iconWrapper}>
                   <Wallet size={20} color={isDark ? '#9CA3AF' : '#6B7280'} />
                 </View>
-                <View>
-                  <Text style={[styles.walletName, dynamicStyles.textMain]}>{item.name}</Text>
+                <View style={styles.textContainer}>
+                  <Text style={[styles.walletName, dynamicStyles.textMain]} numberOfLines={1}>
+                    {item.name}
+                  </Text>
                   <Text style={[styles.walletBalance, dynamicStyles.textMuted]}>
-                    {hideBalance || item.isHidden ? '••••••' : `${formatMoney(item.balance)} ${currency}`}
+                    {item.isHidden ? '••••••' : `${formatMoney(item.balance)} ${currency}`}
                   </Text>
                 </View>
+              </TouchableOpacity>
+
+              {/* Δεξί Κομμάτι: Αυτόνομα Κουμπιά Ενεργειών */}
+              <View style={styles.actionsRow}>
+                <TouchableOpacity 
+                  onPress={() => handleToggleHideWallet(item)} 
+                  hitSlop={12} 
+                  style={styles.actionButton}
+                >
+                  {item.isHidden ? (
+                    <EyeOff size={18} color="#EF4444" /> // Κόκκινο όταν είναι κλειστό/κρυφό
+                  ) : (
+                    <Eye size={18} color={isDark ? '#9CA3AF' : '#6B7280'} />
+                  )}
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  onPress={() => navigation.navigate('WalletDetail', { walletId: item.id })}
+                  style={styles.chevronButton}
+                >
+                  <ChevronRight size={16} color="#9CA3AF" />
+                </TouchableOpacity>
               </View>
 
-              <View style={styles.rightInfo}>
-                {item.isHidden ? (
-                  <EyeOff size={16} color="#9CA3AF" style={{ marginRight: 12 }} />
-                ) : (
-                  <Eye size={16} color="#9CA3AF" style={{ marginRight: 12 }} />
-                )}
-                <ChevronRight size={16} color="#9CA3AF" />
-              </View>
-            </TouchableOpacity>
+            </View>
           </Surface>
         )}
       />
 
-      {/* POP-UP DIALOG ΓΙΑ ΠΡΟΣΘΗΚΗ ΠΟΡΤΟΦΟΛΙΟΥ[cite: 1] */}
+      {/* POP-UP DIALOG ΓΙΑ ΠΡΟΣΘΗΚΗ ΠΟΡΤΟΦΟΛΙΟΥ */}
       <Portal>
         <Dialog 
           visible={isDialogVisible} 
           onDismiss={() => setIsDialogVisible(false)}
           style={dynamicStyles.dialogBg}
         >
-          <Dialog.Title style={dynamicStyles.textMain}>Add New Wallet</Dialog.Title>
+          <Dialog.Title style={dynamicStyles.textMain}>{t('wallets.addWallet', 'Add Wallet')}</Dialog.Title>
           <Dialog.Content>
             <TextInput
-              label="Wallet Name"
+              label={t('wallets.walletName', 'Wallet Name')}
               value={newWalletName}
               onChangeText={setNewWalletName}
               mode="outlined"
@@ -151,7 +183,7 @@ export default function WalletsScreen() {
               textColor={dynamicStyles.textMain.color}
             />
             <TextInput
-              label={`Initial Balance (${currency})`}
+              label={t('wallets.initialBalance', 'Initial Balance')}
               value={newWalletBalance}
               onChangeText={setNewWalletBalance}
               keyboardType="numeric"
@@ -206,15 +238,17 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     width: '100%',
   },
-  cardClickable: {
+  cardContentRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 16,
   },
-  leftInfo: {
+  infoTouchArea: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    marginRight: 12,
   },
   iconWrapper: {
     width: 40,
@@ -225,6 +259,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 14,
   },
+  textContainer: {
+    flex: 1,
+  },
   walletName: {
     fontSize: 15,
     fontWeight: '600',
@@ -234,9 +271,17 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginTop: 2,
   },
-  rightInfo: {
+  actionsRow: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  actionButton: {
+    padding: 8,
+    marginRight: 4,
+  },
+  chevronButton: {
+    paddingVertical: 8,
+    paddingLeft: 4,
   },
   input: {
     marginBottom: 12,
