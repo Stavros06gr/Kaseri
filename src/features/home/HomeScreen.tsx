@@ -1,40 +1,44 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, ScrollView, Dimensions } from 'react-native';
-import { Card, Text, Button, IconButton, ProgressBar, useTheme } from 'react-native-paper';
+import { StyleSheet, View, ScrollView, Dimensions, TouchableOpacity } from 'react-native';
+import { Text, ProgressBar, Surface } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BarChart } from 'react-native-gifted-charts';
 import { Q } from '@nozbe/watermelondb';
 import { subDays } from 'date-fns';
-import { Eye, EyeOff } from 'lucide-react-native';
+import { 
+  Eye, EyeOff, PlusCircle, MinusCircle, ArrowLeftRight, 
+  Wallet, Target, Compass, ChevronRight, TrendingUp, TrendingDown 
+} from 'lucide-react-native';
 
 import { database } from '../../database';
 import { useAppStore } from '../../store/useAppStore';
 import { RootStackParamList } from '../../navigation/types';
 import { formatMoney } from '../../utils/math';
-import Wallet from '../../database/models/Wallet';
-import Transaction from '../../database/models/Transaction';
-import Trip from '../../database/models/Trip';
-import SavingGoal from '../../database/models/SavingGoal';
+import WalletModel from '../../database/models/Wallet';
+import TransactionModel from '../../database/models/Transaction';
+import TripModel from '../../database/models/Trip';
+import SavingGoalModel from '../../database/models/SavingGoal';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'MainTabs'>;
+const screenWidth = Dimensions.get('window').width;
 
 export default function HomeScreen() {
   const { t } = useTranslation();
   const navigation = useNavigation<NavigationProp>();
   const isFocused = useIsFocused();
-  const paperTheme = useTheme();
+  const insets = useSafeAreaInsets(); // Διόρθωση για το κενό στην μπάρα ειδοποιήσεων
 
-  // Zustand State
-  const { hideBalance, toggleHideBalance, currency } = useAppStore();
+  const { hideBalance, toggleHideBalance, currency, theme } = useAppStore();
+  const isDark = theme === 'dark';
 
-  // Local State για τα δεδομένα της βάσης
   const [totalBalance, setTotalBalance] = useState(0);
   const [income30Days, setIncome30Days] = useState(0);
   const [expense30Days, setExpense30Days] = useState(0);
-  const [activeTrips, setActiveTrips] = useState<Trip[]>([]);
-  const [savingGoals, setSavingGoals] = useState<SavingGoal[]>([]);
+  const [activeTrips, setActiveTrips] = useState<TripModel[]>([]);
+  const [savingGoals, setSavingGoals] = useState<SavingGoalModel[]>([]);
 
   useEffect(() => {
     if (isFocused) {
@@ -47,167 +51,227 @@ export default function HomeScreen() {
       const now = new Date().getTime();
       const thirtyDaysAgo = subDays(new Date(), 30).getTime();
 
-      // 1. Υπολογισμός Συνολικού Υπολοίπου (μόνο από μη κρυφά πορτοφόλια)
-      const walletsRecords = (await database.get('wallets').query().fetch()) as Wallet[];
-      const computedBalance = walletsRecords
+      const wallets = (await database.get('wallets').query().fetch()) as WalletModel[];
+      const computedBalance = wallets
         .filter(w => !w.isHidden)
         .reduce((sum, w) => sum + w.balance, 0);
       setTotalBalance(computedBalance);
 
-      // 2. Υπολογισμός Εσόδων/Εξόδων τελευταίων 30 ημερών
-      const txRecords = (await database.get('transactions')
+      const transactions = (await database.get('transactions')
         .query(Q.where('date', Q.gte(thirtyDaysAgo)))
-        .fetch()) as Transaction[];
+        .fetch()) as TransactionModel[];
 
       let inc = 0;
       let exp = 0;
-      txRecords.forEach(tx => {
+      transactions.forEach(tx => {
         if (tx.type === 'income') inc += tx.amount;
         if (tx.type === 'expense') exp += tx.amount;
       });
       setIncome30Days(inc);
       setExpense30Days(exp);
 
-      // 3. Φόρτωση Ταξιδιών (Προστέθηκε το .query())
-      const tripsRecords = (await database.get('trips').query().fetch()) as Trip[];
-      const currentTrips = tripsRecords.filter(trip => {
+      const trips = (await database.get('trips').query().fetch()) as TripModel[];
+      const currentTrips = trips.filter(trip => {
         const start = new Date(trip.startDate).getTime();
         const end = new Date(trip.endDate).getTime();
         return now >= start && now <= end;
       });
       setActiveTrips(currentTrips);
 
-      // 4. Φόρτωση Στόχων Αποταμίευσης (Προστέθηκε το .query())
-      const goalsRecords = (await database.get('saving_goals').query().fetch()) as SavingGoal[];
-      setSavingGoals(goalsRecords);
+      const goals = (await database.get('saving_goals').query().fetch()) as SavingGoalModel[];
+      setSavingGoals(goals);
     } catch (error) {
-      console.error('Σφάλμα κατά τη φόρτωση των δεδομένων του Home:', error);
+      console.error('Error fetching dashboard data:', error);
     }
   };
 
-  // Δεδομένα για το γράφημα (Incomes vs Expenses)
   const chartData = [
-    { value: income30Days, label: t('transactions.income'), frontColor: '#4CAF50' },
-    { value: expense30Days, label: t('transactions.expense'), frontColor: '#F44336' },
+    { value: income30Days, label: t('transactions.income'), frontColor: '#10B981', spacing: 20 },
+    { value: expense30Days, label: t('transactions.expense'), frontColor: '#EF4444' }
   ];
 
+  const dynamicStyles = {
+    bg: { backgroundColor: isDark ? '#121212' : '#F9FAFB' },
+    card: { backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF' },
+    textMain: { color: isDark ? '#FFFFFF' : '#111827' },
+    textMuted: { color: isDark ? '#9CA3AF' : '#6B7280' },
+    divider: { backgroundColor: isDark ? '#2D2D2D' : '#F3F4F6' }
+  };
+
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView 
+      style={[styles.container, dynamicStyles.bg]} 
+      contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 16 }]}
+    >
       
-      {/* 1. BALANCE CARD (Υπόλοιπο, Έσοδα, Έξοδα) */}
-      <Card style={styles.mainCard} mode="contained">
-        <Card.Content>
-          <View style={styles.balanceHeader}>
-            <Text variant="titleMedium" style={styles.cardLabel}>{t('home.balance')}</Text>
-            <IconButton
-              icon={({ size, color }) => hideBalance ? <EyeOff size={size} color={color} /> : <Eye size={size} color={color} />}
-              size={20}
-              onPress={toggleHideBalance}
-            />
-          </View>
-          <Text variant="headlineLarge" style={styles.balanceText}>
-            {hideBalance ? '••••••' : `${formatMoney(totalBalance)} ${currency}`}
-          </Text>
+      {/* UNIFIED CARD: TOTAL BALANCE & 30-DAY STATS */}
+      <Surface style={[styles.unifiedBalanceCard, dynamicStyles.card]} mode="flat">
+        <View style={styles.rowBetween}>
+          <Text style={[styles.balanceTitle, dynamicStyles.textMuted]}>{t('home.balance')}</Text>
+          <TouchableOpacity onPress={toggleHideBalance} hitSlop={15}>
+            {hideBalance ? (
+              <EyeOff size={20} color={dynamicStyles.textMuted.color} />
+            ) : (
+              <Eye size={20} color={dynamicStyles.textMuted.color} />
+            )}
+          </TouchableOpacity>
+        </View>
+        <Text style={[styles.balanceAmount, dynamicStyles.textMain]}>
+          {hideBalance ? '••••••' : `${formatMoney(totalBalance)} ${currency}`}
+        </Text>
 
-          <View style={styles.statsRow}>
-            <View style={styles.statCol}>
-              <Text variant="bodySmall" style={styles.cardLabel}>{t('home.incomes30Days')}</Text>
-              <Text variant="titleMedium" style={styles.incomeText}>
-                {hideBalance ? '•••' : `+${formatMoney(income30Days)}`}
-              </Text>
-            </View>
-            <View style={styles.statCol}>
-              <Text variant="bodySmall" style={styles.cardLabel}>{t('home.expenses30Days')}</Text>
-              <Text variant="titleMedium" style={styles.expenseText}>
-                {hideBalance ? '•••' : `-${formatMoney(expense30Days)}`}
-              </Text>
-            </View>
-          </View>
-        </Card.Content>
-      </Card>
+        <View style={[styles.unifiedDivider, dynamicStyles.divider]} />
 
-      {/* 2. QUICK ACTIONS (Κουμπιά για γρήγορες ενέργειες) */}
-      <View style={styles.quickActions}>
-        <Button mode="contained" onPress={() => navigation.navigate('Income')} style={styles.actionBtn} buttonColor="#4CAF50">
-          {t('transactions.income')}
-        </Button>
-        <Button mode="contained" onPress={() => navigation.navigate('Expense')} style={styles.actionBtn} buttonColor="#F44336">
-          {t('transactions.expense')}
-        </Button>
-        <Button mode="elevated" onPress={() => navigation.navigate('Transfer')} style={styles.actionBtn}>
-          {t('transactions.transfer')}
-        </Button>
+        <View style={styles.statsInlineRow}>
+          <View style={styles.statColumn}>
+            <View style={styles.statLabelRow}>
+              <TrendingUp size={14} color="#10B981" style={{ marginRight: 4 }} />
+              <Text style={[styles.miniCardTitle, dynamicStyles.textMuted]}>{t('transactions.income')}</Text>
+            </View>
+            <Text style={styles.incomeValue}>
+              {hideBalance ? '•••' : `+${formatMoney(income30Days)}`}
+            </Text>
+          </View>
+          
+          <View style={[styles.verticalDivider, dynamicStyles.divider]} />
+
+          <View style={styles.statColumn}>
+            <View style={styles.statLabelRow}>
+              <TrendingDown size={14} color="#EF4444" style={{ marginRight: 4 }} />
+              <Text style={[styles.miniCardTitle, dynamicStyles.textMuted]}>{t('transactions.expense')}</Text>
+            </View>
+            <Text style={styles.expenseValue}>
+              {hideBalance ? '•••' : `-${formatMoney(expense30Days)}`}
+            </Text>
+          </View>
+        </View>
+      </Surface>
+
+      {/* QUICK TRANSACTION ACTIONS */}
+      <View style={styles.actionRow}>
+        <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('Income')}>
+          <View style={[styles.iconWrapper, { backgroundColor: '#E6F4EA' }]}>
+            <PlusCircle size={24} color="#10B981" />
+          </View>
+          <Text style={[styles.actionText, dynamicStyles.textMain]}>{t('transactions.income')}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('Expense')}>
+          <View style={[styles.iconWrapper, { backgroundColor: '#FCE8E6' }]}>
+            <MinusCircle size={24} color="#EF4444" />
+          </View>
+          <Text style={[styles.actionText, dynamicStyles.textMain]}>{t('transactions.expense')}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('Transfer')}>
+          <View style={[styles.iconWrapper, { backgroundColor: '#E8F0FE' }]}>
+            <ArrowLeftRight size={22} color="#2563EB" />
+          </View>
+          <Text style={[styles.actionText, dynamicStyles.textMain]}>{t('transactions.transfer')}</Text>
+        </TouchableOpacity>
       </View>
 
-      {/* 3. CHART (Διάγραμμα τελευταίων 30 ημερών) */}
-      <Card style={styles.sectionCard} mode="outlined">
-        <Card.Content>
-          <Text variant="titleMedium" style={styles.sectionTitle}>{t('home.incomes30Days')} vs {t('home.expenses30Days')}</Text>
-          <View style={styles.chartContainer}>
-            <BarChart
-              data={chartData}
-              barWidth={45}
-              noOfSections={3}
-              barBorderRadius={4}
-              frontColor="lightgray"
-              yAxisThickness={0}
-              xAxisThickness={1}
-              height={150}
-              width={Dimensions.get('window').width - 80}
-            />
-          </View>
-        </Card.Content>
-      </Card>
+      {/* NAVIGATION HUB CONTROLS */}
+      <View style={styles.navigationHub}>
+        {/* WALLETS - FULL WIDTH */}
+        <Surface style={[styles.fullWidthHubCard, dynamicStyles.card]} mode="flat">
+          <TouchableOpacity style={styles.hubClickable} onPress={() => navigation.navigate('MainTabs', { screen: 'MoreModes' })}>
+            <Wallet size={20} color="#6B7280" />
+            <Text style={[styles.hubText, dynamicStyles.textMain]}>{t('home.wallets')}</Text>
+            <ChevronRight size={16} color="#9CA3AF" />
+          </TouchableOpacity>
+        </Surface>
 
-      {/* 4. ACTIVE TRIPS LIST (Ενεργά ταξίδια) */}
+        {/* SAVING GOALS & TRIPS - SIDE BY SIDE */}
+        <View style={styles.splitHubRow}>
+          <Surface style={[styles.halfHubCard, dynamicStyles.card]} mode="flat">
+            <TouchableOpacity style={styles.hubClickable} onPress={() => navigation.navigate('MainTabs', { screen: 'MoreModes' })}>
+              <Target size={18} color="#6B7280" />
+              <Text style={[styles.hubTextSmall, dynamicStyles.textMain]} numberOfLines={1}>{t('home.savingGoals')}</Text>
+              <ChevronRight size={14} color="#9CA3AF" />
+            </TouchableOpacity>
+          </Surface>
+
+          <Surface style={[styles.halfHubCard, dynamicStyles.card]} mode="flat">
+            <TouchableOpacity style={styles.hubClickable} onPress={() => navigation.navigate('MainTabs', { screen: 'MoreModes' })}>
+              <Compass size={18} color="#6B7280" />
+              <Text style={[styles.hubTextSmall, dynamicStyles.textMain]} numberOfLines={1}>{t('home.trips')}</Text>
+              <ChevronRight size={14} color="#9CA3AF" />
+            </TouchableOpacity>
+          </Surface>
+        </View>
+      </View>
+
+      {/* MODERN ANALYSIS CHART */}
+      <Surface style={[styles.mainSectionCard, dynamicStyles.card]} mode="flat">
+        <View style={styles.chartHeaderInline}>
+          <Text style={[styles.sectionHeaderTitle, dynamicStyles.textMain]}>30-Day Analysis</Text>
+          <Text style={[styles.chartRangeText, dynamicStyles.textMuted]}>Last 30 days</Text>
+        </View>
+        <View style={styles.chartWrapper}>
+          <BarChart
+            data={chartData}
+            barWidth={40}
+            initialSpacing={45}
+            spacing={55}
+            barBorderRadius={8}
+            showFractionalValues={false}
+            hideRules
+            showYAxisIndices={false}
+            yAxisThickness={0}
+            xAxisThickness={0}
+            hideYAxisText
+            height={130}
+            width={screenWidth - 80}
+          />
+        </View>
+      </Surface>
+
+      {/* ACTIVE TRIPS */}
       {activeTrips.length > 0 && (
-        <Card style={styles.sectionCard} mode="outlined">
-          <Card.Content>
-            <Text variant="titleMedium" style={styles.sectionTitle}>{t('home.trips')}</Text>
-            {activeTrips.map(trip => {
-              // Υπολογισμός προόδου budget αν υπάρχει
-              const hasBudget = trip.budget && trip.budget > 0;
-              return (
-                <View key={trip.id} style={styles.itemRow}>
-                  <Text variant="bodyLarge">{trip.destination}</Text>
-                  {hasBudget ? (
-                    <View style={styles.progressContainer}>
-                      <ProgressBar progress={0.5} color={paperTheme.colors.primary} />
-                      <Text variant="bodySmall" style={styles.progressText}>{t('common.total')}: {trip.budget} {currency}</Text>
-                    </View>
-                  ) : (
-                    <Text variant="bodySmall" style={styles.cardLabel}>{t('home.noBudget')}</Text>
-                  )}
-                </View>
-              );
-            })}
-          </Card.Content>
-        </Card>
-      )}
-
-      {/* 5. SAVING GOALS LIST (Στόχοι αποταμίευσης) */}
-      {savingGoals.length > 0 && (
-        <Card style={styles.sectionCard} mode="outlined">
-          <Card.Content>
-            <Text variant="titleMedium" style={styles.sectionTitle}>{t('home.savingGoals')}</Text>
-            {savingGoals.map(goal => {
-              const progress = goal.targetAmount > 0 ? goal.currentAmount / goal.targetAmount : 0;
-              const percentage = Math.min(Math.round(progress * 100), 100);
-              return (
-                <View key={goal.id} style={styles.itemRow}>
-                  <View style={styles.goalHeader}>
-                    <Text variant="bodyLarge">{goal.title}</Text>
-                    <Text variant="bodyMedium">{percentage}%</Text>
-                  </View>
-                  <ProgressBar progress={Math.min(progress, 1)} color="#2196F3" style={styles.progressBar} />
-                  <Text variant="bodySmall" style={styles.progressText}>
-                    {formatMoney(goal.currentAmount)} / {formatMoney(goal.targetAmount)} {currency}
+        <Surface style={[styles.mainSectionCard, dynamicStyles.card]} mode="flat">
+          <View style={styles.rowInline}>
+            <Compass size={18} color="#6B7280" style={{ marginRight: 8 }} />
+            <Text style={[styles.sectionHeaderTitle, dynamicStyles.textMain]}>{t('home.trips')}</Text>
+          </View>
+          {activeTrips.map(trip => {
+            const hasBudget = trip.budget && trip.budget > 0;
+            return (
+              <View key={trip.id} style={styles.itemContainer}>
+                <View style={styles.rowBetween}>
+                  <Text style={[styles.itemLabel, dynamicStyles.textMain]}>{trip.destination}</Text>
+                  <Text style={[styles.itemSub, dynamicStyles.textMuted]}>
+                    {hasBudget ? `${trip.budget} ${currency}` : t('home.noBudget')}
                   </Text>
                 </View>
-              );
-            })}
-          </Card.Content>
-        </Card>
+                {hasBudget && <ProgressBar progress={0.4} color="#10B981" style={styles.minimalProgress} />}
+              </View>
+            );
+          })}
+        </Surface>
+      )}
+
+      {/* SAVING GOALS */}
+      {savingGoals.length > 0 && (
+        <Surface style={[styles.mainSectionCard, dynamicStyles.card]} mode="flat">
+          <View style={styles.rowInline}>
+            <Target size={18} color="#6B7280" style={{ marginRight: 8 }} />
+            <Text style={[styles.sectionHeaderTitle, dynamicStyles.textMain]}>{t('home.savingGoals')}</Text>
+          </View>
+          {savingGoals.map(goal => {
+            const progress = goal.targetAmount > 0 ? goal.currentAmount / goal.targetAmount : 0;
+            const pct = Math.min(Math.round(progress * 100), 100);
+            return (
+              <View key={goal.id} style={styles.itemContainer}>
+                <View style={styles.rowBetween}>
+                  <Text style={[styles.itemLabel, dynamicStyles.textMain]}>{goal.title}</Text>
+                  <Text style={[styles.itemSub, dynamicStyles.textMain]}>{pct}%</Text>
+                </View>
+                <ProgressBar progress={Math.min(progress, 1)} color="#2563EB" style={styles.minimalProgress} />
+              </View>
+            );
+          })}
+        </Surface>
       )}
 
     </ScrollView>
@@ -217,89 +281,166 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f6f6f6',
   },
-  content: {
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+  },
+  unifiedBalanceCard: {
+    padding: 20,
+    borderRadius: 24,
+    marginBottom: 24,
+  },
+  balanceTitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  balanceAmount: {
+    fontSize: 36,
+    fontWeight: '700',
+    marginTop: 6,
+    letterSpacing: -0.5,
+  },
+  unifiedDivider: {
+    height: 1,
+    marginVertical: 18,
+  },
+  statsInlineRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  statColumn: {
+    flex: 1,
+  },
+  statLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  verticalDivider: {
+    width: 1,
+    height: 35,
+    marginHorizontal: 16,
+  },
+  miniCardTitle: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  incomeValue: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#10B981',
+  },
+  expenseValue: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#EF4444',
+  },
+  actionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 24,
+  },
+  actionButton: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  iconWrapper: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  actionText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  navigationHub: {
+    marginBottom: 24,
+  },
+  fullWidthHubCard: {
+    borderRadius: 16,
+    marginBottom: 10,
+    width: '100%',
+  },
+  splitHubRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  halfHubCard: {
+    flex: 1,
+    borderRadius: 16,
+    marginHorizontal: 4,
+  },
+  hubClickable: {
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 16,
-    paddingBottom: 32,
   },
-  mainCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
+  hubText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 12,
+  },
+  hubTextSmall: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  mainSectionCard: {
+    padding: 20,
+    borderRadius: 24,
     marginBottom: 16,
-    elevation: 2,
   },
-  sectionCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    marginBottom: 16,
-  },
-  balanceHeader: {
+  chartHeaderInline: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  cardLabel: {
-    color: '#757575',
-  },
-  balanceText: {
-    fontWeight: 'bold',
-    marginVertical: 8,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 16,
-    borderTopWidth: 0.5,
-    borderTopColor: '#e0e0e0',
-    paddingTop: 16,
-  },
-  statCol: {
-    flex: 1,
-  },
-  incomeText: {
-    color: '#4CAF50',
-    fontWeight: '600',
-  },
-  expenseText: {
-    color: '#F44336',
-    fontWeight: '600',
-  },
-  quickActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     marginBottom: 16,
   },
-  actionBtn: {
-    flex: 1,
-    marginHorizontal: 4,
+  sectionHeaderTitle: {
+    fontSize: 16,
+    fontWeight: '700',
   },
-  sectionTitle: {
-    fontWeight: 'bold',
-    marginBottom: 12,
+  chartRangeText: {
+    fontSize: 12,
+    fontWeight: '500',
   },
-  chartContainer: {
+  chartWrapper: {
     alignItems: 'center',
     marginTop: 8,
   },
-  itemRow: {
-    marginBottom: 16,
-  },
-  goalHeader: {
+  rowBetween: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 6,
+    alignItems: 'center',
   },
-  progressBar: {
-    height: 8,
-    borderRadius: 4,
+  rowInline: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 14,
   },
-  progressContainer: {
-    marginTop: 6,
+  itemContainer: {
+    marginBottom: 14,
   },
-  progressText: {
-    textAlign: 'right',
-    color: '#757575',
-    marginTop: 4,
+  itemLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  itemSub: {
+    fontSize: 13,
+  },
+  minimalProgress: {
+    height: 6,
+    borderRadius: 3,
+    marginTop: 8,
+    backgroundColor: '#E5E7EB',
   },
 });
