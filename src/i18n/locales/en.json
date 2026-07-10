@@ -61,7 +61,16 @@
     "addExpense": "Add Expense",
     "expenseCategoryPlaceholder": "e.g. Supermarket, Bills, Fuel",
     "saveExpenseBtn": "Save Expense",
-    "defaultExpenseCat": "General"
+    "defaultExpenseCat": "General",
+    "addTransfer": "Transfer Funds",
+    "fromWalletLabel": "Source Wallet (From)",
+    "toWalletLabel": "Destination Wallet (To)",
+    "saveTransferBtn": "Confirm Transfer",
+    "defaultTransferCat": "Transfer",
+    "sameWalletError": "Source and destination wallets cannot be the same",
+    "transfer": "Transfer",
+    "transferTo": "Transfer to",
+    "transferFrom": "Transfer from"
   },
   "history": {
     "filter": "Filter",

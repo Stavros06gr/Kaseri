@@ -17,23 +17,33 @@ interface Props {
 }
 
 export default function TransactionItem({ item, hideBalance, currency, lang, isDark, onPress }: Props) {
-  const isIncome = item.type === 'income';
-  const isExpense = item.type === 'expense';
+  // Έξυπνος διαχωρισμός βάσει τύπου ΚΑΙ κατεύθυνσης χρημάτων (Double-Entry)
+  const isIncome = item.type === 'income' || (item.type === 'transfer' && item.amount > 0);
+  const isExpense = item.type === 'expense' || (item.type === 'transfer' && item.amount < 0);
   
   const currentLocale = lang === 'gr' ? el : enUS;
   const formattedDate = format(new Date(item.date), 'dd MMM yyyy, HH:mm', { locale: currentLocale });
 
+  // Δυναμικά χρώματα και σύμβολα
   const amountColor = isIncome ? '#10B981' : isExpense ? '#EF4444' : '#6B7280';
+  const badgeBgColor = isIncome ? '#E6F4EA' : isExpense ? '#FCE8E6' : '#F3F4F6';
   const sign = isIncome ? '+' : isExpense ? '-' : '';
+
+  // Παίρνουμε την απόλυτη τιμή για να μην μπερδευτεί το string formatting με τα μείον της βάσης
+  const absoluteAmount = Math.abs(item.amount);
 
   return (
     <TouchableOpacity style={styles.rowWrapper} onPress={onPress} activeOpacity={0.7}>
-      <View style={[styles.iconWrapper, { backgroundColor: isIncome ? '#E6F4EA' : isExpense ? '#FCE8E6' : '#F3F4F6' }]}>
-        {isIncome && <ArrowDownLeft size={18} color="#10B981" />}
-        {isExpense && <ArrowUpRight size={18} color="#EF4444" />}
-        {item.type === 'transfer' && <ArrowLeftRight size={18} color="#6B7280" />}
+      
+      {/* ICON BADGE */}
+      <View style={[styles.iconWrapper, { backgroundColor: badgeBgColor }]}>
+        {item.type === 'income' && <ArrowDownLeft size={18} color="#10B981" />}
+        {item.type === 'expense' && <ArrowUpRight size={18} color="#EF4444" />}
+        {/* Για τις μεταφορές κρατάμε το δικό τους εικονίδιο, αλλά αλλάζει χρώμα ανάλογα αν μπαίνουν ή βγαίνουν λεφτά */}
+        {item.type === 'transfer' && <ArrowLeftRight size={18} color={amountColor} />}
       </View>
 
+      {/* TRANSACTION DETAILS */}
       <View style={styles.textDetails}>
         <Text style={[styles.categoryText, { color: isDark ? '#FFFFFF' : '#111827' }]} numberOfLines={1}>
           {item.category || item.type.toUpperCase()}
@@ -44,11 +54,13 @@ export default function TransactionItem({ item, hideBalance, currency, lang, isD
         <Text style={styles.dateText}>{formattedDate}</Text>
       </View>
 
+      {/* AMOUNT DISPLAY */}
       <View style={styles.amountWrapper}>
         <Text style={[styles.amountText, { color: amountColor }]}>
-          {hideBalance ? '•••' : `${sign}${formatMoney(item.amount)} ${currency}`}
+          {hideBalance ? '•••' : `${sign}${formatMoney(absoluteAmount)} ${currency}`}
         </Text>
       </View>
+      
     </TouchableOpacity>
   );
 }
