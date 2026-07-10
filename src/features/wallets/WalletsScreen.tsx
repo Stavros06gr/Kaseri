@@ -39,7 +39,11 @@ export default function WalletsScreen() {
   const loadWallets = async () => {
     try {
       const walletRecords = (await database.get('wallets').query().fetch()) as WalletModel[];
-      setWallets(walletRecords);
+      
+      // Ταξινόμηση από το μεγαλύτερο balance στο μικρότερο
+      const sortedWallets = walletRecords.sort((a, b) => b.balance - a.balance);
+      
+      setWallets(sortedWallets);
     } catch (error) {
       console.error('Error loading wallets:', error);
     }

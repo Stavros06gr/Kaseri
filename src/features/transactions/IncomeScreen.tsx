@@ -52,11 +52,16 @@ export default function IncomeScreen() {
   const loadWallets = async () => {
     try {
       const walletRecords = (await database.get('wallets').query().fetch()) as WalletModel[];
-      setWallets(walletRecords);
       
-      if (walletRecords.length > 0 && !selectedWalletId) {
-        setSelectedWalletId(walletRecords[0].id);
-        setSelectedWalletName(walletRecords[0].name);
+      // Ταξινόμηση από το μεγαλύτερο balance στο μικρότερο
+      const sortedWallets = walletRecords.sort((a, b) => b.balance - a.balance);
+      
+      setWallets(sortedWallets);
+      
+      // Προεπιλογή του πορτοφολιού με το μεγαλύτερο υπόλοιπο
+      if (sortedWallets.length > 0 && !selectedWalletId) {
+        setSelectedWalletId(sortedWallets[0].id);
+        setSelectedWalletName(sortedWallets[0].name);
       }
     } catch (error) {
       console.error('Error loading wallets for income:', error);
