@@ -12,7 +12,7 @@ interface Props {
   onToggleHide: () => void;
   currency: string;
   isDark: boolean;
-  t: (key: string) => string;
+  t: (key: string, defaultText: string) => string; // <- Ενημέρωση του τύπου για ασφαλές fallback
 }
 
 export default function UnifiedBalanceCard({
@@ -23,11 +23,12 @@ export default function UnifiedBalanceCard({
   return (
     <Surface style={styles.card} mode="flat">
       <View style={styles.rowBetween}>
-        <Text style={styles.balanceTitle}>{t('home.balance')}</Text>
+        <Text style={styles.balanceTitle}>{t('home.balance', 'Total Balance')}</Text>
         <TouchableOpacity onPress={onToggleHide} hitSlop={15}>
           {hideBalance ? <EyeOff size={20} color={styles.textMuted.color} /> : <Eye size={20} color={styles.textMuted.color} />}
         </TouchableOpacity>
       </View>
+      
       <Text style={styles.balanceAmount}>
         {hideBalance ? '••••••' : `${formatMoney(totalBalance)} ${currency}`}
       </Text>
@@ -38,7 +39,7 @@ export default function UnifiedBalanceCard({
         <View style={styles.statColumn}>
           <View style={styles.statLabelRow}>
             <TrendingUp size={14} color="#10B981" style={{ marginRight: 4 }} />
-            <Text style={styles.miniCardTitle}>{t('transactions.income')}</Text>
+            <Text style={styles.miniCardTitle}>{t('transactions.income', 'Income')}</Text>
           </View>
           <Text style={styles.incomeValue}>
             {hideBalance ? '•••' : `+${formatMoney(income30Days)}`}
@@ -50,7 +51,7 @@ export default function UnifiedBalanceCard({
         <View style={styles.statColumn}>
           <View style={styles.statLabelRow}>
             <TrendingDown size={14} color="#EF4444" style={{ marginRight: 4 }} />
-            <Text style={styles.miniCardTitle}>{t('transactions.expense')}</Text>
+            <Text style={styles.miniCardTitle}>{t('transactions.expense', 'Expense')}</Text>
           </View>
           <Text style={styles.expenseValue}>
             {hideBalance ? '•••' : `-${formatMoney(expense30Days)}`}

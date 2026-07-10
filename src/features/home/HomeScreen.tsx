@@ -16,7 +16,6 @@ import TransactionModel from '../../database/models/Transaction';
 import TripModel from '../../database/models/Trip';
 import SavingGoalModel from '../../database/models/SavingGoal';
 
-// Imports των νέων components
 import UnifiedBalanceCard from './components/UnifiedBalanceCard';
 import QuickActions from './components/QuickActions';
 import NavigationHub from './components/NavigationHub';
@@ -52,25 +51,36 @@ export default function HomeScreen() {
       const now = new Date().getTime();
       const thirtyDaysAgo = subDays(new Date(), 30).getTime();
 
+      // 1. Φόρτωση πορτοφολιών και φιλτράρισμα των ορατών
       const wallets = (await database.get('wallets').query().fetch()) as WalletModel[];
-      const computedBalance = wallets
-        .filter(w => !w.isHidden)
-        .reduce((sum, w) => sum + w.balance, 0);
+      const visibleWallets = wallets.filter(w => !w.isHidden);
+      
+      // Δημιουργούμε ένα γρήγορο Set με τα IDs των εμφανών πορτοφολιών
+      const visibleWalletIds = new Set(visibleWallets.map(w => w.id));
+
+      const computedBalance = visibleWallets.reduce((sum, w) => sum + w.balance, 0);
       setTotalBalance(computedBalance);
 
+      // 2. Φόρτωση συναλλαγών 30 ημερών
       const transactions = (await database.get('transactions')
         .query(Q.where('date', Q.gte(thirtyDaysAgo)))
         .fetch()) as TransactionModel[];
 
       let inc = 0;
       let exp = 0;
+
       transactions.forEach(tx => {
+        // Σβήνουμε/προσπερνάμε συναλλαγές που ανήκουν σε κρυφά πορτοφόλια
+        if (!visibleWalletIds.has(tx.walletId)) return;
+
         if (tx.type === 'income') inc += tx.amount;
         if (tx.type === 'expense') exp += tx.amount;
       });
+      
       setIncome30Days(inc);
       setExpense30Days(exp);
 
+      // 3. Ενεργά Ταξίδια
       const trips = (await database.get('trips').query().fetch()) as TripModel[];
       const currentTrips = trips.filter(trip => {
         const start = new Date(trip.startDate).getTime();
@@ -79,6 +89,7 @@ export default function HomeScreen() {
       });
       setActiveTrips(currentTrips);
 
+      // 4. Αποταμιευτικοί Στόχοι
       const goals = (await database.get('saving_goals').query().fetch()) as SavingGoalModel[];
       setSavingGoals(goals);
     } catch (error) {
@@ -122,22 +133,22 @@ export default function HomeScreen() {
         income={income30Days}
         expense={expense30Days}
         isDark={isDark}
-        incomeLabel={t('transactions.income')}
-        expenseLabel={t('transactions.expense')}
+        incomeLabel={t('transactions.income', 'Income')}
+        expenseLabel={t('transactions.expense', 'Expense')}
       />
 
       <ActiveTripsList
         trips={activeTrips}
         currency={currency}
         isDark={isDark}
-        noBudgetLabel={t('home.noBudget')}
-        titleLabel={t('home.trips')}
+        noBudgetLabel={t('home.noBudget', 'No Budget Set')}
+        titleLabel={t('home.trips', 'Active Trips')}
       />
 
       <SavingGoalsList
         goals={savingGoals}
         isDark={isDark}
-        titleLabel={t('home.savingGoals')}
+        titleLabel={t('home.savingGoals', 'Saving Goals')}
       />
     </ScrollView>
   );

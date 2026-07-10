@@ -34,7 +34,13 @@
     "initialBalance": "Initial Balance",
     "editBalance": "Edit Balance",
     "history": "Wallet's History",
-    "isHidden": "Hidden Wallet"
+    "isHidden": "Hidden Wallet",
+    "title": "Wallets",
+    "balanceTitle": "Wallet Balance",
+    "historyTitle": "Wallet History",
+    "editBalanceTitle": "Edit Wallet Balance",
+    "balanceLabel": "New Balance Amount",
+    "invalidBalance": "Please enter a valid number"
   },
   "transactions": {
     "income": "Income",

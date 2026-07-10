@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
 import { Q } from '@nozbe/watermelondb';
 import { subDays } from 'date-fns';
+import { Portal, Dialog, TextInput, Button } from 'react-native-paper';
 
 import { database } from '../../database';
 import { useAppStore } from '../../store/useAppStore';
@@ -20,7 +21,6 @@ import TransactionItem from './components/TransactionItem';
 type WalletDetailScreenRouteProp = RouteProp<RootStackParamList, 'WalletDetail'>;
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'WalletDetail'>;
 
-// Παράκαμψη του strict typing glitch της FlashList με τις κλάσεις της WatermelonDB
 const AnyFlashList = FlashList as any;
 
 export default function WalletDetailScreen() {
@@ -31,14 +31,18 @@ export default function WalletDetailScreen() {
   const insets = useSafeAreaInsets();
 
   const { walletId } = route.params;
-
-  const { hideBalance, toggleHideBalance, currency, theme, language } = useAppStore();
+  const { currency, theme, language } = useAppStore();
   const isDark = theme === 'dark';
 
+  // Database States
   const [wallet, setWallet] = useState<WalletModel | null>(null);
   const [transactions, setTransactions] = useState<TransactionModel[]>([]);
   const [income30Days, setIncome30Days] = useState(0);
   const [expense30Days, setExpense30Days] = useState(0);
+
+  // Popup Window States
+  const [isDialogVisible, setIsDialogVisible] = useState(false);
+  const [editBalanceInput, setEditBalanceInput] = useState('');
 
   useEffect(() => {
     if (isFocused) {
@@ -50,6 +54,7 @@ export default function WalletDetailScreen() {
     try {
       const walletRecord = (await database.get('wallets').find(walletId)) as WalletModel;
       setWallet(walletRecord);
+      setEditBalanceInput(walletRecord.balance.toString());
 
       const txHistory = (await database.get('transactions')
         .query(Q.where('wallet_id', walletId), Q.sortBy('date', Q.desc))
@@ -69,7 +74,43 @@ export default function WalletDetailScreen() {
       setExpense30Days(exp);
     } catch (error) {
       console.error('Error fetching wallet details:', error);
-      Alert.alert('Error', 'Could not load wallet data.');
+    }
+  };
+
+  // Ενημέρωση της κατάστασης απόκρυψης στη WatermelonDB
+  const handleToggleHide = async () => {
+    if (!wallet) return;
+    try {
+      await database.write(async () => {
+        await wallet.update((w: any) => {
+          w.isHidden = !w.isHidden;
+        });
+      });
+      fetchWalletData();
+    } catch (error) {
+      console.error('Failed to toggle wallet visibility:', error);
+    }
+  };
+
+  // Αποθήκευση του νέου υπολοίπου από το Popup Window
+  const handleSaveBalance = async () => {
+    if (!wallet) return;
+    const newBalance = parseFloat(editBalanceInput);
+    if (isNaN(newBalance)) {
+      Alert.alert('Error', t('wallets.invalidBalance', 'Please enter a valid number'));
+      return;
+    }
+
+    try {
+      await database.write(async () => {
+        await wallet.update((w: any) => {
+          w.balance = newBalance;
+        });
+      });
+      setIsDialogVisible(false);
+      fetchWalletData();
+    } catch (error) {
+      console.error('Failed to update wallet balance:', error);
     }
   };
 
@@ -88,9 +129,9 @@ export default function WalletDetailScreen() {
             balance={wallet.balance}
             income30Days={income30Days}
             expense30Days={expense30Days}
-            hideBalance={hideBalance}
-            onToggleHide={toggleHideBalance}
-            onEditBalance={() => Alert.alert('Edit Balance', 'Popup input placeholder')}
+            isHidden={wallet.isHidden} // <- Χρήση του πεδίου από τη βάση
+            onToggleHide={handleToggleHide}
+            onEditBalance={() => setIsDialogVisible(true)}
             currency={currency}
             isDark={isDark}
             t={t}
@@ -99,7 +140,7 @@ export default function WalletDetailScreen() {
         renderItem={({ item }: any) => (
           <TransactionItem
             item={item}
-            hideBalance={hideBalance}
+            hideBalance={wallet.isHidden}
             currency={currency}
             lang={language}
             isDark={isDark}
@@ -107,6 +148,40 @@ export default function WalletDetailScreen() {
           />
         )}
       />
+
+      {/* POP-UP WINDOW ΓΙΑ EDIT BALANCE */}
+      <Portal>
+        <Dialog 
+          visible={isDialogVisible} 
+          onDismiss={() => setIsDialogVisible(false)}
+          style={{ backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF' }}
+        >
+          <Dialog.Title style={{ color: isDark ? '#FFFFFF' : '#111827' }}>
+            {t('wallets.editBalanceTitle', 'Edit Balance')}
+          </Dialog.Title>
+          <Dialog.Content>
+            <TextInput
+              label={t('wallets.balanceLabel', 'New Balance')}
+              value={editBalanceInput}
+              onChangeText={setEditBalanceInput}
+              keyboardType="numeric"
+              mode="outlined"
+              outlineColor={isDark ? '#2D2D2D' : '#E5E7EB'}
+              activeOutlineColor="#2563EB"
+              textColor={isDark ? '#FFFFFF' : '#111827'}
+              style={{ backgroundColor: 'transparent' }}
+            />
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setIsDialogVisible(false)} textColor="#EF4444">
+              {t('common.cancel', 'Cancel')}
+            </Button>
+            <Button onPress={handleSaveBalance} textColor="#2563EB">
+              {t('common.save', 'Save')}
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </View>
   );
 }
