@@ -8,10 +8,11 @@ import HomeScreen from '../features/home/HomeScreen';
 
 const Tab = createBottomTabNavigator<TabParamList>();
 
-// Προσωρινά Placeholders για να κάνει compile το app σου
-const DummyScreen = ({ name }: { name: string }) => (
-  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><Text>{name}</Text></View>
-);
+// Ορίζουμε τις dummy οθόνες ως κανονικά, σταθερά components ΕΞΩ από το TabNavigator
+const HistoryScreenDummy = () => <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><Text>History Screen</Text></View>;
+const YearlySummariesDummy = () => <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><Text>Yearly Summaries Screen</Text></View>;
+const MoreModesDummy = () => <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><Text>More Modes Screen</Text></View>;
+const SettingsDummy = () => <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><Text>Settings Screen</Text></View>;
 
 export default function TabNavigator() {
   const { t } = useTranslation();
@@ -20,7 +21,7 @@ export default function TabNavigator() {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#007AFF', // Μπορείς να το αλλάξεις ανάλογα με το theme σου
+        tabBarActiveTintColor: '#007AFF', 
         tabBarInactiveTintColor: 'gray',
       }}
     >
@@ -34,7 +35,7 @@ export default function TabNavigator() {
       />
       <Tab.Screen 
         name="History" 
-        component={() => <DummyScreen name="History Screen" />} 
+        component={HistoryScreenDummy} 
         options={{
           title: t('navigation.history'),
           tabBarIcon: ({ color, size }) => <Clock color={color} size={size} />,
@@ -42,7 +43,7 @@ export default function TabNavigator() {
       />
       <Tab.Screen 
         name="YearlySummaries" 
-        component={() => <DummyScreen name="Yearly Summaries Screen" />} 
+        component={YearlySummariesDummy} 
         options={{
           title: t('navigation.yearlySummaries'),
           tabBarIcon: ({ color, size }) => <Calendar color={color} size={size} />,
@@ -50,7 +51,7 @@ export default function TabNavigator() {
       />
       <Tab.Screen 
         name="MoreModes" 
-        component={() => <DummyScreen name="More Modes Screen" />} 
+        component={MoreModesDummy} 
         options={{
           title: t('navigation.moreModes'),
           tabBarIcon: ({ color, size }) => <LayoutGrid color={color} size={size} />,
@@ -58,7 +59,7 @@ export default function TabNavigator() {
       />
       <Tab.Screen 
         name="Settings" 
-        component={() => <DummyScreen name="Settings Screen" />} 
+        component={SettingsDummy} 
         options={{
           title: t('navigation.settings'),
           tabBarIcon: ({ color, size }) => <Settings color={color} size={size} />,

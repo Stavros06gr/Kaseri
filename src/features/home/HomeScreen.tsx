@@ -7,6 +7,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BarChart } from 'react-native-gifted-charts';
 import { Q } from '@nozbe/watermelondb';
 import { subDays } from 'date-fns';
+import { Eye, EyeOff } from 'lucide-react-native';
 
 import { database } from '../../database';
 import { useAppStore } from '../../store/useAppStore';
@@ -99,7 +100,7 @@ export default function HomeScreen() {
           <View style={styles.balanceHeader}>
             <Text variant="titleMedium" style={styles.cardLabel}>{t('home.balance')}</Text>
             <IconButton
-              icon={hideBalance ? 'eye-off' : 'eye'}
+              icon={({ size, color }) => hideBalance ? <EyeOff size={size} color={color} /> : <Eye size={size} color={color} />}
               size={20}
               onPress={toggleHideBalance}
             />
