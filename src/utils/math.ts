@@ -33,10 +33,13 @@ export const divide = (a: number, b: number): number => {
  * Μορφοποίηση αριθμού σε string με 2 δεκαδικά ψηφία (π.χ. 1250.5 -> "1250.50")
  * Ιδανικό για εμφάνιση τιμών στο UI.
  */
-export const formatMoney = (amount: number): string => {
-  try {
-    return new Big(amount).toFixed(2);
-  } catch (error) {
+export function formatMoney(amount: number): string {
+  if (amount === undefined || amount === null || isNaN(amount)) {
     return '0.00';
   }
-};
+
+  return new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
