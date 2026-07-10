@@ -111,7 +111,7 @@ export default function HomeScreen() {
       />
 
       <NavigationHub
-        onWallets={() => navigation.navigate('MainTabs', { screen: 'MoreModes' })}
+        onWallets={() => navigation.navigate('Wallets')}
         onGoals={() => navigation.navigate('MainTabs', { screen: 'MoreModes' })}
         onTrips={() => navigation.navigate('MainTabs', { screen: 'MoreModes' })}
         isDark={isDark}

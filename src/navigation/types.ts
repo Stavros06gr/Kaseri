@@ -15,6 +15,7 @@ export type RootStackParamList = {
   LockScreen: undefined; // Οθόνη βιομετρικού ελέγχου (Fingerprint)
   
   // Πορτοφόλια
+  Wallets: undefined;
   WalletDetail: { walletId: string };
   
   // Συναλλαγές (Modals / Καταγραφές)

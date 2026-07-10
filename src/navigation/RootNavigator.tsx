@@ -6,12 +6,14 @@ import { Fingerprint } from 'lucide-react-native';
 
 import { RootStackParamList } from './types';
 import TabNavigator from './TabNavigator';
-import { useAppStore } from '../store/useAppStore'; // [cite: 285]
-import { useBiometrics } from '../hooks/useBiometrics'; // 
+import { useAppStore } from '../store/useAppStore';
+import { useBiometrics } from '../hooks/useBiometrics';
+
+import WalletsScreen from '../features/wallets/WalletsScreen';
+import WalletDetailScreen from '../features/wallets/WalletDetailScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-// ΟΘΟΝΗ ΚΛΕΙΔΩΜΑΤΟΣ (LOCK SCREEN)
 const LockScreen = ({ onUnlock }: { onUnlock: () => void }) => {
   const { requestAuthentication } = useBiometrics();
 
@@ -22,7 +24,6 @@ const LockScreen = ({ onUnlock }: { onUnlock: () => void }) => {
     }
   };
 
-  // Αυτόματο άνοιγμα του Fingerprint prompt μόλις εμφανιστεί η οθόνη
   useEffect(() => {
     triggerAuth();
   }, []);
@@ -33,7 +34,6 @@ const LockScreen = ({ onUnlock }: { onUnlock: () => void }) => {
         <Fingerprint size={48} color="#2563EB" style={styles.icon} />
         <Text style={styles.lockTitle}>Kaseri is Locked</Text>
         <Text style={styles.lockSubtitle}>Please authenticate using your fingerprint to proceed.</Text>
-        
         <TouchableOpacity style={styles.retryBtn} onPress={triggerAuth}>
           <Text style={styles.retryText}>Try Again</Text>
         </TouchableOpacity>
@@ -42,8 +42,6 @@ const LockScreen = ({ onUnlock }: { onUnlock: () => void }) => {
   );
 };
 
-// Σταθερά dummy components για τις υπόλοιπες οθόνες
-const WalletDetailDummy = () => <View style={styles.dummy}><Text>Wallet Detail</Text></View>;
 const IncomeDummy = () => <View style={styles.dummy}><Text>Add Income</Text></View>;
 const ExpenseDummy = () => <View style={styles.dummy}><Text>Add Expense</Text></View>;
 const TransferDummy = () => <View style={styles.dummy}><Text>Transfer Money</Text></View>;
@@ -59,7 +57,7 @@ const SubscriptionManagerDummy = () => <View style={styles.dummy}><Text>Subscrip
 const CategoryStatisticsDummy = () => <View style={styles.dummy}><Text>Category Statistics</Text></View>;
 
 export default function RootNavigator() {
-  const { biometricsEnabled } = useAppStore(); // [cite: 285]
+  const { biometricsEnabled } = useAppStore();
   const [isLocked, setIsLocked] = useState<boolean>(biometricsEnabled); 
 
   useEffect(() => {
@@ -75,7 +73,8 @@ export default function RootNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="MainTabs" component={TabNavigator} />
-      <Stack.Screen name="WalletDetail" component={WalletDetailDummy} />
+      <Stack.Screen name="Wallets" component={WalletsScreen} />
+      <Stack.Screen name="WalletDetail" component={WalletDetailScreen} />
       <Stack.Screen name="Income" component={IncomeDummy} />
       <Stack.Screen name="Expense" component={ExpenseDummy} />
       <Stack.Screen name="Transfer" component={TransferDummy} />
@@ -94,50 +93,12 @@ export default function RootNavigator() {
 }
 
 const styles = StyleSheet.create({
-  lockContainer: {
-    flex: 1,
-    backgroundColor: '#121212',
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-  },
-  lockCard: {
-    backgroundColor: '#1E1E1E',
-    borderRadius: 24,
-    padding: 32,
-    alignItems: 'center',
-  },
-  icon: {
-    marginBottom: 16,
-  },
-  lockTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginBottom: 8,
-  },
-  lockSubtitle: {
-    fontSize: 14,
-    color: '#9CA3AF',
-    textAlign: 'center',
-    marginBottom: 24,
-    lineHeight: 20,
-  },
-  retryBtn: {
-    backgroundColor: '#2563EB',
-    paddingVertical: 12,
-    paddingHorizontal: 28,
-    borderRadius: 14,
-    width: '100%',
-    alignItems: 'center',
-  },
-  retryText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  dummy: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  lockContainer: { flex: 1, backgroundColor: '#121212', justifyContent: 'center', paddingHorizontal: 24 },
+  lockCard: { backgroundColor: '#1E1E1E', borderRadius: 24, padding: 32, alignItems: 'center' },
+  icon: { marginBottom: 16 },
+  lockTitle: { fontSize: 20, fontWeight: '700', color: '#FFFFFF', marginBottom: 8 },
+  lockSubtitle: { fontSize: 14, color: '#9CA3AF', textAlign: 'center', marginBottom: 24, lineHeight: 20 },
+  retryBtn: { backgroundColor: '#2563EB', paddingVertical: 12, paddingHorizontal: 28, borderRadius: 14, width: '100%', alignItems: 'center' },
+  retryText: { color: '#FFFFFF', fontSize: 14, fontWeight: '600' },
+  dummy: { flex: 1, justifyContent: 'center', alignItems: 'center' }
 });
