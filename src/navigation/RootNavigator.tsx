@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { View, Text, Button } from 'react-native';
 import { RootStackParamList } from './types';
 import TabNavigator from './TabNavigator';
+import { useAppStore } from '../store/useAppStore'; // Εισαγωγή του Zustand store
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -13,7 +14,7 @@ const LockScreenPlaceholder = ({ onUnlock }: { onUnlock: () => void }) => (
   </View>
 );
 
-// Σταθερά dummy components για να μην χτυπάει το inline function warning
+// Σταθερά dummy components για τις υπόλοιπες οθόνες
 const WalletDetailDummy = () => <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><Text>Wallet Detail</Text></View>;
 const IncomeDummy = () => <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><Text>Add Income</Text></View>;
 const ExpenseDummy = () => <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><Text>Add Expense</Text></View>;
@@ -30,7 +31,18 @@ const SubscriptionManagerDummy = () => <View style={{ flex: 1, justifyContent: '
 const CategoryStatisticsDummy = () => <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><Text>Category Statistics</Text></View>;
 
 export default function RootNavigator() {
-  const [isLocked, setIsLocked] = useState<boolean>(true); 
+  // Διαβάζουμε αν το fingerprint είναι ενεργοποιημένο από τις ρυθμίσεις
+  const { biometricsEnabled } = useAppStore();
+  
+  // Αρχικοποιούμε το lock state με βάση τη ρύθμιση του store
+  const [isLocked, setIsLocked] = useState<boolean>(biometricsEnabled); 
+
+  // Αν ο χρήστης απενεργοποιήσει το fingerprint από τα settings, ξεκλειδώνουμε αμέσως
+  useEffect(() => {
+    if (!biometricsEnabled) {
+      setIsLocked(false);
+    }
+  }, [biometricsEnabled]);
 
   if (isLocked) {
     return <LockScreenPlaceholder onUnlock={() => setIsLocked(false)} />;
