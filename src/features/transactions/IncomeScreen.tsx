@@ -9,9 +9,11 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { el, enUS } from 'date-fns/locale';
 
 import { database } from '../../database';
+import { Q } from '@nozbe/watermelondb';
 import { useAppStore } from '../../store/useAppStore';
 import { RootStackParamList } from '../../navigation/types';
 import WalletModel from '../../database/models/Wallet';
+import TransactionModel from '../../database/models/Transaction';
 
 import IncomeHeader from './components/IncomeHeader';
 import AmountInputCard from './components/AmountInputCard';
@@ -50,23 +52,42 @@ export default function IncomeScreen() {
   }, [isFocused]);
 
   const loadWallets = async () => {
-    try {
-      const walletRecords = (await database.get('wallets').query().fetch()) as WalletModel[];
+  try {
+    // 1. Φόρτωση και ταξινόμηση των πορτοφολιών από το μεγαλύτερο balance στο μικρότερο
+    const walletRecords = (await database.get('wallets').query().fetch()) as WalletModel[];
+    const sortedWallets = walletRecords.sort((a, b) => b.balance - a.balance);
+    setWallets(sortedWallets);
+    
+    // Αν υπάρχουν πορτοφόλια και δεν έχει ήδη επιλέξει ο χρήστης κάτι χειροκίνητα
+    if (sortedWallets.length > 0 && !selectedWalletId) {
       
-      // Ταξινόμηση από το μεγαλύτερο balance στο μικρότερο
-      const sortedWallets = walletRecords.sort((a, b) => b.balance - a.balance);
-      
-      setWallets(sortedWallets);
-      
-      // Προεπιλογή του πορτοφολιού με το μεγαλύτερο υπόλοιπο
-      if (sortedWallets.length > 0 && !selectedWalletId) {
-        setSelectedWalletId(sortedWallets[0].id);
-        setSelectedWalletName(sortedWallets[0].name);
+      // 2. Ψάχνουμε την πιο πρόσφατη συναλλαγή στην εφαρμογή (οποιασδήποτε κατηγορίας/τύπου)
+      const lastTransactions = (await database.get('transactions')
+        .query(Q.sortBy('date', Q.desc), Q.take(1))
+        .fetch()) as TransactionModel[];
+
+      // Προεπιλογή (fallback): Το πρώτο πορτοφόλι της λίστας (μεγαλύτερο balance)
+      let targetWallet = sortedWallets[0];
+
+      // 3. Αν υπάρχει προηγούμενη συναλλαγή, βρίσκουμε ποιο πορτοφόλι χρησιμοποιήθηκε
+      if (lastTransactions.length > 0) {
+        const lastWalletId = lastTransactions[0].walletId;
+        const foundLastWallet = sortedWallets.find(w => w.id === lastWalletId);
+        
+        // Σιγουρευόμαστε ότι το πορτοφόλι υπάρχει ακόμα και δεν έχει διαγραφεί
+        if (foundLastWallet) {
+          targetWallet = foundLastWallet;
+        }
       }
-    } catch (error) {
-      console.error('Error loading wallets for income:', error);
+
+      // 4. Θέτουμε την προεπιλογή στην οθόνη
+      setSelectedWalletId(targetWallet.id);
+      setSelectedWalletName(targetWallet.name);
     }
-  };
+  } catch (error) {
+    console.error('Error loading wallets for income:', error);
+  }
+};
 
   const handleSaveIncome = async () => {
     const parsedAmount = parseFloat(amount);
