@@ -1,0 +1,86 @@
+{
+  "navigation": {
+    "home": "Home",
+    "history": "History",
+    "yearlySummaries": "Yearly Summaries",
+    "moreModes": "More Modes",
+    "settings": "Settings"
+  },
+  "common": {
+    "amount": "Amount",
+    "category": "Category",
+    "date": "Date",
+    "time": "Time",
+    "description": "Description",
+    "optional": "optional",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "total": "Total",
+    "all": "All"
+  },
+  "home": {
+    "balance": "Total Balance",
+    "incomes30Days": "Incomes (Last 30 days)",
+    "expenses30Days": "Expenses (Last 30 days)",
+    "wallets": "Wallets",
+    "savingGoals": "Saving Goals",
+    "trips": "Trips",
+    "noBudget": "No budget"
+  },
+  "wallets": {
+    "addWallet": "Add Wallet",
+    "walletName": "Wallet Name",
+    "initialBalance": "Initial Balance",
+    "editBalance": "Edit Balance",
+    "history": "Wallet's History",
+    "isHidden": "Hidden Wallet"
+  },
+  "transactions": {
+    "income": "Income",
+    "expense": "Expense",
+    "transfer": "Transfer",
+    "selectAccount": "Select Account",
+    "selectFromAccount": "Select From Account",
+    "selectToAccount": "Select To Account",
+    "editTransaction": "Edit Transaction"
+  },
+  "history": {
+    "filter": "Filter",
+    "newest": "Newest",
+    "latest": "Oldest"
+  },
+  "summaries": {
+    "monthlySummaries": "Monthly Summaries",
+    "monthlySummary": "Monthly Summary"
+  },
+  "goals": {
+    "newGoal": "New Saving Goal",
+    "targetAmount": "Target Amount",
+    "targetDate": "Target Date",
+    "newTransfer": "New Saving Transfer",
+    "add": "Add",
+    "remove": "Remove"
+  },
+  "trips": {
+    "plannedTrips": "Planned Trips",
+    "addNewTrip": "Add New Trip",
+    "destination": "Destination",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "budget": "Budget"
+  },
+  "modes": {
+    "own": "Own",
+    "fuelCalculator": "Fuel Calculator",
+    "subscriptionManager": "Subscription Manager",
+    "categoryStatistics": "Category Statistics"
+  },
+  "settings": {
+    "language": "Language",
+    "currency": "Currency",
+    "theme": "Theme",
+    "trading212": "Trading212 API Key",
+    "fingerprint": "Fingerprint Authentication"
+  }
+}
