@@ -57,7 +57,11 @@
     "saveIncomeBtn": "Save Income",
     "invalidAmount": "Please enter a valid amount",
     "selectWalletError": "Please select a wallet",
-    "defaultIncomeCat": "Salary"
+    "defaultIncomeCat": "Salary",
+    "addExpense": "Add Expense",
+    "expenseCategoryPlaceholder": "e.g. Supermarket, Bills, Fuel",
+    "saveExpenseBtn": "Save Expense",
+    "defaultExpenseCat": "General"
   },
   "history": {
     "filter": "Filter",

@@ -12,6 +12,7 @@ import { useBiometrics } from '../hooks/useBiometrics';
 import WalletsScreen from '../features/wallets/WalletsScreen';
 import WalletDetailScreen from '../features/wallets/WalletDetailScreen';
 import IncomeScreen from '../features/transactions/IncomeScreen';
+import ExpenseScreen from '../features/transactions/ExpenseScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -77,7 +78,7 @@ export default function RootNavigator() {
       <Stack.Screen name="Wallets" component={WalletsScreen} />
       <Stack.Screen name="WalletDetail" component={WalletDetailScreen} />
       <Stack.Screen name="Income" component={IncomeScreen} />
-      <Stack.Screen name="Expense" component={ExpenseDummy} />
+      <Stack.Screen name="Expense" component={ExpenseScreen} />
       <Stack.Screen name="Transfer" component={TransferDummy} />
       <Stack.Screen name="EditTransaction" component={EditTransactionDummy} />
       <Stack.Screen name="MonthlySummaries" component={MonthlySummariesDummy} />
