@@ -45,11 +45,19 @@
   "transactions": {
     "income": "Income",
     "expense": "Expense",
-    "transfer": "Transfer",
-    "selectAccount": "Select Account",
-    "selectFromAccount": "Select From Account",
-    "selectToAccount": "Select To Account",
-    "editTransaction": "Edit Transaction"
+    "addIncome": "Add Income",
+    "amountLabel": "Amount",
+    "selectWallet": "Select Wallet",
+    "chooseWallet": "Choose a wallet...",
+    "categoryLabel": "Category",
+    "categoryPlaceholder": "e.g. Salary, Freelance",
+    "descriptionLabel": "Description (Optional)",
+    "descriptionPlaceholder": "Add more info...",
+    "dateLabel": "Date",
+    "saveIncomeBtn": "Save Income",
+    "invalidAmount": "Please enter a valid amount",
+    "selectWalletError": "Please select a wallet",
+    "defaultIncomeCat": "Salary"
   },
   "history": {
     "filter": "Filter",
