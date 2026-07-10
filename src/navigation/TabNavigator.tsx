@@ -4,6 +4,7 @@ import { View, Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Home, Clock, Calendar, LayoutGrid, Settings } from 'lucide-react-native';
 import { TabParamList } from './types';
+import HomeScreen from '../features/home/HomeScreen';
 
 const Tab = createBottomTabNavigator<TabParamList>();
 
@@ -25,7 +26,7 @@ export default function TabNavigator() {
     >
       <Tab.Screen 
         name="Home" 
-        component={() => <DummyScreen name="Home Screen" />} 
+        component={HomeScreen} 
         options={{
           title: t('navigation.home'),
           tabBarIcon: ({ color, size }) => <Home color={color} size={size} />,
