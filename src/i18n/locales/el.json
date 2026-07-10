@@ -1,3 +1,86 @@
 {
-    
+  "navigation": {
+    "home": "Αρχική",
+    "history": "Ιστορικό",
+    "yearlySummaries": "Ετήσιες Σύνοψεις",
+    "moreModes": "Λειτουργίες",
+    "settings": "Ρυθμίσεις"
+  },
+  "common": {
+    "amount": "Ποσό",
+    "category": "Κατηγορία",
+    "date": "Ημερομηνία",
+    "time": "Ώρα",
+    "description": "Περιγραφή",
+    "optional": "προαιρετικό",
+    "save": "Αποθήκευση",
+    "cancel": "Ακύρωση",
+    "delete": "Διαγραφή",
+    "total": "Σύνολο",
+    "all": "Όλα"
+  },
+  "home": {
+    "balance": "Συνολικό Υπόλοιπο",
+    "incomes30Days": "Έσοδα (Τελευταίες 30 ημέρες)",
+    "expenses30Days": "Έξοδα (Τελευταίες 30 ημέρες)",
+    "wallets": "Πορτοφόλια",
+    "savingGoals": "Στόχοι Αποταμίευσης",
+    "trips": "Ταξίδια",
+    "noBudget": "Χωρίς budget"
+  },
+  "wallets": {
+    "addWallet": "Προσθήκη Πορτοφολιού",
+    "walletName": "Όνομα Πορτοφολιού",
+    "initialBalance": "Αρχικό Υπόλοιπο",
+    "editBalance": "Επεξεργασία Υπολοίπου",
+    "history": "Ιστορικό Πορτοφολιού",
+    "isHidden": "Κρυφό Πορτοφόλι"
+  },
+  "transactions": {
+    "income": "Έσοδο",
+    "expense": "Έξοδο",
+    "transfer": "Μεταφορά",
+    "selectAccount": "Επιλογή Λογαριασμού",
+    "selectFromAccount": "Επιλογή από Λογαριασμό",
+    "selectToAccount": "Επιλογή σε Λογαριασμό",
+    "editTransaction": "Επεξεργασία Συναλλαγής"
+  },
+  "history": {
+    "filter": "Φιλτράρισμα",
+    "newest": "Νεότερα",
+    "latest": "Παλαιότερα"
+  },
+  "summaries": {
+    "monthlySummaries": "Μηνιαίες Σύνοψεις",
+    "monthlySummary": "Μηνιαία Σύνοψη"
+  },
+  "goals": {
+    "newGoal": "Νέος Στόχος Αποταμίευσης",
+    "targetAmount": "Ποσό Στόχου",
+    "targetDate": "Ημερομηνία Στόχου",
+    "newTransfer": "Νέα Μεταφορά Στόχου",
+    "add": "Προσθήκη",
+    "remove": "Αφαίρεση"
+  },
+  "trips": {
+    "plannedTrips": "Προγραμματισμένα Ταξίδια",
+    "addNewTrip": "Προσθήκη Νέου Ταξιδιού",
+    "destination": "Προορισμός",
+    "startDate": "Ημερομηνία Έναρξης",
+    "endDate": "Ημερομηνία Λήξης",
+    "budget": "Budget"
+  },
+  "modes": {
+    "own": "Χρέη",
+    "fuelCalculator": "Υπολογιστής Καυσίμων",
+    "subscriptionManager": "Διαχείριση Συνδρομών",
+    "categoryStatistics": "Στατιστικά Κατηγοριών"
+  },
+  "settings": {
+    "language": "Γλώσσα",
+    "currency": "Νόμισμα",
+    "theme": "Θέμα",
+    "trading212": "Trading212 API Key",
+    "fingerprint": "Fingerprint / Αποτύπωμα"
+  }
 }
