@@ -7,6 +7,7 @@ import { TabParamList } from './types';
 import { useAppStore } from '../store/useAppStore';
 
 import HomeScreen from '../features/home/HomeScreen';
+import HistoryScreen from '../features/history/HistoryScreen';
 import SettingsScreen from '../features/settings/SettingsScreen';
 
 const Tab = createBottomTabNavigator<TabParamList>();
@@ -46,7 +47,7 @@ export default function TabNavigator() {
       />
       <Tab.Screen 
         name="History" 
-        component={HistoryScreenDummy} 
+        component={HistoryScreen} 
         options={{
           title: t('navigation.history'),
           tabBarIcon: ({ color, size }) => <Clock color={color} size={size} />,

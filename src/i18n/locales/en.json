@@ -75,9 +75,10 @@
     "transferFrom": "Transfer from"
   },
   "history": {
-    "filter": "Filter",
-    "newest": "Newest",
-    "latest": "Oldest"
+    "title": "Activity History",
+    "searchPlaceholder": "Search category or description...",
+    "all": "All Transactions",
+    "emptyState": "No transactions found matching your criteria"
   },
   "summaries": {
     "monthlySummaries": "Monthly Summaries",

@@ -41,6 +41,7 @@
     "expense": "Έξοδο",
     "transfer": "Μεταφορά",
     "selectAccount": "Επιλογή Λογαριασμού",
+    "defaultTransferCat": "Μεταφορά",
     "selectFromAccount": "Επιλογή από Λογαριασμό",
     "selectToAccount": "Επιλογή σε Λογαριασμό",
     "editTransaction": "Επεξεργασία Συναλλαγής"

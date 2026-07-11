@@ -13,8 +13,8 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
-    lng: 'en', // Προεπιλεγμένη γλώσσα βάσει των προδιαγραφών σου
-    fallbackLng: 'gr',
+    lng: 'gr', // Προεπιλεγμένη γλώσσα βάσει των προδιαγραφών σου
+    fallbackLng: 'en',
     interpolation: {
       escapeValue: false // Το React προστατεύει ήδη από XSS επιθέσεις
     }
