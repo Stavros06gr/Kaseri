@@ -19,7 +19,7 @@ interface Props {
 
 const AnyFlashList = FlashList as any;
 
-// Κάνουμε memoize το Row Item για να μην ξαναγίνεται render άσκοπα κατά το scrolling
+// Memoize το Row Item για μέγιστη ταχύτητα
 const MemoizedTransactionItem = React.memo(TransactionItem);
 
 export default function OptimizedTransactionList({
@@ -49,11 +49,13 @@ export default function OptimizedTransactionList({
     <AnyFlashList
       data={data}
       keyExtractor={(item: TransactionModel) => item.id}
-      estimatedItemSize={75} // Ακριβές μέγεθος row για σωστό allocation
+      estimatedItemSize={75}
       contentContainerStyle={styles.listContent}
       showsVerticalScrollIndicator={false}
-      removeClippedSubviews={true} // Αποδέσμευση off-screen στοιχείων από τη μνήμη
-      drawDistance={250} // Pre-render buffer
+      removeClippedSubviews={false}
+      drawDistance={400}
+      
+      /* 🛠️ Η ΓΡΑΜΜΗ ΠΟΥ ΕΛΕΙΠΕ ΚΑΙ ΕΠΕΣΤΡΕΨΕ: */
       renderItem={({ item }: { item: TransactionModel }) => (
         <MemoizedTransactionItem
           item={item}
