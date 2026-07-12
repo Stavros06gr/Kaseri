@@ -85,7 +85,10 @@
     "monthlySummary": "Monthly Summary",
     "title": "Yearly Review",
     "yearlyNet": "Yearly Net Savings",
-    "breakdown": "Monthly Breakdown"
+    "breakdown": "Monthly Breakdown",
+    "monthlyNet": "Monthly Net Savings",
+    "expenseBreakdown": "Expense Breakdown",
+    "noMonthlyExpenses": "No expense logs recorded for this month"
   },
   "goals": {
     "newGoal": "New Saving Goal",
