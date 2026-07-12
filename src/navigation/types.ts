@@ -25,7 +25,7 @@ export type RootStackParamList = {
   EditTransaction: { transactionId: string };
   
   // Αναφορές
-  MonthlySummaries: { year: number };
+  MonthlySummaries: { year: number; monthIndex: number };
   MonthlySummaryDetail: { year: number; month: number };
   
   // Στόχοι & Ταξίδια

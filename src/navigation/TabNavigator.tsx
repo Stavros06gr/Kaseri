@@ -8,6 +8,7 @@ import { useAppStore } from '../store/useAppStore';
 
 import HomeScreen from '../features/home/HomeScreen';
 import HistoryScreen from '../features/history/HistoryScreen';
+import YearlyHeaderScreen from '../features/summaries/YearlySummariesScreen';
 import SettingsScreen from '../features/settings/SettingsScreen';
 
 const Tab = createBottomTabNavigator<TabParamList>();
@@ -55,7 +56,7 @@ export default function TabNavigator() {
       />
       <Tab.Screen 
         name="YearlySummaries" 
-        component={YearlySummariesDummy} 
+        component={YearlyHeaderScreen} 
         options={{
           title: t('navigation.yearlySummaries'),
           tabBarIcon: ({ color, size }) => <Calendar color={color} size={size} />,

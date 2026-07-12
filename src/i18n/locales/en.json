@@ -82,7 +82,10 @@
   },
   "summaries": {
     "monthlySummaries": "Monthly Summaries",
-    "monthlySummary": "Monthly Summary"
+    "monthlySummary": "Monthly Summary",
+    "title": "Yearly Review",
+    "yearlyNet": "Yearly Net Savings",
+    "breakdown": "Monthly Breakdown"
   },
   "goals": {
     "newGoal": "New Saving Goal",
