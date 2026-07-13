@@ -2,9 +2,12 @@ import React from 'react';
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import { Text, Surface, ProgressBar, Button } from 'react-native-paper';
 import { PlusCircle, MinusCircle, Trash2 } from 'lucide-react-native';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { formatMoney } from '../../../utils/math';
 import { format } from 'date-fns';
 import { el, enUS } from 'date-fns/locale';
+import { RootStackParamList } from '../../../navigation/types';
 
 interface Props {
   goal: { id: string; title: string; targetAmount: number; currentAmount: number; targetDate?: Date | null };
@@ -17,14 +20,16 @@ interface Props {
   t: (key: string, defaultText: string) => string;
 }
 
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
 export default function SavingGoalCard({ goal, currency, language, isDark, onDeposit, onWithdraw, onDelete, t }: Props) {
   const currentLocale = language === 'gr' ? el : enUS;
+  const navigation = useNavigation<NavigationProp>();
   
   const percentage = goal.targetAmount > 0 ? (goal.currentAmount / goal.targetAmount) * 100 : 0;
   const progress = Math.min(Math.max(percentage / 100, 0), 1);
   const remaining = Math.max(goal.targetAmount - goal.currentAmount, 0);
 
-  // 🛠️ ΔΙΟΡΘΩΣΗ: Αφαίρεση του τυπογραφικού χαρακτήρα "v" στο τέλος
   const hasDate = !!goal.targetDate;
   const isAchieved = percentage >= 100;
   const isExpired = hasDate && !isAchieved && new Date().getTime() > goal.targetDate!.getTime();
@@ -33,53 +38,60 @@ export default function SavingGoalCard({ goal, currency, language, isDark, onDep
 
   return (
     <Surface style={[styles.card, { backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF' }]} mode="flat">
-      <View style={styles.topRow}>
-        <View style={{ flex: 1 }}>
-          {/* 🛠️ ΔΙΟΡΘΩΣΗ: Αλλαγή από goal.name σε goal.title */}
-          <Text style={[styles.goalName, { color: isDark ? '#FFFFFF' : '#111827' }]} numberOfLines={1}>
-            {goal.title || 'Unnamed Goal'}
-          </Text>
+      {/* 🛠️ Η ΣΥΝΔΕΣΗ: Πατώντας το σώμα της κάρτας, πλοηγούμαστε στα Details */}
+      <TouchableOpacity 
+        onPress={() => navigation.navigate('SavingGoalDetail', { goalId: goal.id })} 
+        activeOpacity={0.7}
+      >
+        <View style={styles.topRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.goalName, { color: isDark ? '#FFFFFF' : '#111827' }]} numberOfLines={1}>
+              {goal.title || 'Unnamed Goal'}
+            </Text>
+            
+            {isAchieved ? (
+              <Text style={styles.achievedText}>🎉 {t('goals.achieved', 'Completed!')}</Text>
+            ) : isExpired ? (
+              <Text style={styles.expiredText}>⚠️ {t('goals.expired', 'Overdue!')} ({format(goal.targetDate!, 'dd MMM yyyy', { locale: currentLocale })})</Text>
+            ) : hasDate ? (
+              <Text style={[styles.dateText, { color: subTextColor }]}>
+                {t('goals.until', 'Target:')} {format(goal.targetDate!, 'dd MMM yyyy', { locale: currentLocale })}
+              </Text>
+            ) : (
+              <Text style={[styles.dateText, { color: subTextColor, fontStyle: 'italic' }]}>
+                ∞ {t('goals.noDeadline', 'No deadline set')}
+              </Text>
+            )}
+          </View>
           
-          {isAchieved ? (
-            <Text style={styles.achievedText}>🎉 {t('goals.achieved', 'Completed!')}</Text>
-          ) : isExpired ? (
-            <Text style={styles.expiredText}>⚠️ {t('goals.expired', 'Overdue!')} ({format(goal.targetDate!, 'dd MMM yyyy', { locale: currentLocale })})</Text>
-          ) : hasDate ? (
-            <Text style={[styles.dateText, { color: subTextColor }]}>
-              {t('goals.until', 'Target:')} {format(goal.targetDate!, 'dd MMM yyyy', { locale: currentLocale })}
-            </Text>
-          ) : (
-            <Text style={[styles.dateText, { color: subTextColor, fontStyle: 'italic' }]}>
-              ∞ {t('goals.noDeadline', 'No deadline set')}
-            </Text>
-          )}
+          {/* Κουμπί Διαγραφής */}
+          <TouchableOpacity onPress={() => onDelete(goal.id)} style={styles.deleteBtn} hitSlop={10}>
+            <Trash2 size={16} color={isDark ? '#4B5563' : '#9CA3AF'} />
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity onPress={() => onDelete(goal.id)} style={styles.deleteBtn} hitSlop={10}>
-          <Trash2 size={16} color={isDark ? '#4B5563' : '#9CA3AF'} />
-        </TouchableOpacity>
-      </View>
 
-      <View style={styles.amountRow}>
-        <Text style={[styles.currentAmount, { color: isAchieved ? '#10B981' : '#2563EB' }]}>
-          {formatMoney(goal.currentAmount)} {currency}
-        </Text>
-        <Text style={[styles.targetAmount, { color: subTextColor }]}>
-          / {formatMoney(goal.targetAmount)} {currency}
-        </Text>
-      </View>
+        <View style={styles.amountRow}>
+          <Text style={[styles.currentAmount, { color: isAchieved ? '#10B981' : '#2563EB' }]}>
+            {formatMoney(goal.currentAmount)} {currency}
+          </Text>
+          <Text style={[styles.targetAmount, { color: subTextColor }]}>
+            / {formatMoney(goal.targetAmount)} {currency}
+          </Text>
+        </View>
 
-      <View style={styles.progressWrapper}>
-        <ProgressBar progress={progress} color={isAchieved ? '#10B981' : isExpired ? '#EF4444' : '#2563EB'} style={styles.progressBar} />
-        <Text style={[styles.percentageText, { color: isAchieved ? '#10B981' : isExpired ? '#EF4444' : '#2563EB' }]}>
-          {percentage.toFixed(0)}%
-        </Text>
-      </View>
+        <View style={styles.progressWrapper}>
+          <ProgressBar progress={progress} color={isAchieved ? '#10B981' : isExpired ? '#EF4444' : '#2563EB'} style={styles.progressBar} />
+          <Text style={[styles.percentageText, { color: isAchieved ? '#10B981' : isExpired ? '#EF4444' : '#2563EB' }]}>
+            {percentage.toFixed(0)}%
+          </Text>
+        </View>
 
-      {remaining > 0 && (
-        <Text style={[styles.remainingText, { color: subTextColor }]}>
-          {t('goals.missing', 'Remaining:')} <Text style={styles.boldAmount}>{formatMoney(remaining)} {currency}</Text>
-        </Text>
-      )}
+        {remaining > 0 && (
+          <Text style={[styles.remainingText, { color: subTextColor }]}>
+            {t('goals.missing', 'Remaining:')} <Text style={styles.boldAmount}>{formatMoney(remaining)} {currency}</Text>
+          </Text>
+        )}
+      </TouchableOpacity>
 
       <View style={[styles.divider, { backgroundColor: isDark ? '#2D2D2D' : '#F3F4F6' }]} />
 
