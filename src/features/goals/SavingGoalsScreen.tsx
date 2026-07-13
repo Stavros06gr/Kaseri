@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, FlatList, Alert } from 'react-native';
-import { Text, ActivityIndicator, Portal, Dialog, TextInput, Button } from 'react-native-paper';
+import { ActivityIndicator, Text } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { useIsFocused } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Target as TargetIcon } from 'lucide-react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { format } from 'date-fns'; // 👈 Εισαγωγή format
-import { el, enUS } from 'date-fns/locale'; // 👈 Εισαγωγή locales
+import { el, enUS } from 'date-fns/locale';
 
 import { database } from '../../database';
 import { useAppStore } from '../../store/useAppStore';
@@ -15,6 +13,7 @@ import { useAppStore } from '../../store/useAppStore';
 // Components
 import SavingGoalsHeader from './components/SavingGoalsHeader';
 import SavingGoalCard from './components/SavingGoalCard';
+import AddGoalModal from './components/AddGoalModal'; // 👈 Εισαγωγή του νέου component
 
 export default function SavingGoalsScreen() {
   const { t } = useTranslation();
@@ -23,18 +22,12 @@ export default function SavingGoalsScreen() {
 
   const { currency, theme, language } = useAppStore();
   const isDark = theme === 'dark';
-  const currentLocale = language === 'gr' ? el : enUS; // 👈 Ορισμός Locale
+  const currentLocale = language === 'gr' ? el : enUS;
 
-  // Data States
+  // Data & Modal Visibility States
   const [loading, setLoading] = useState(true);
   const [goals, setGoals] = useState<any[]>([]);
-
-  // Add Goal Modal States
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
-  const [newName, setNewName] = useState('');
-  const [newTarget, setNewTarget] = useState('');
-  const [newDate, setNewDate] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
 
   useEffect(() => {
     if (isFocused) {
@@ -54,27 +47,19 @@ export default function SavingGoalsScreen() {
     }
   };
 
-  const handleCreateGoal = async () => {
-    const parsedTarget = parseFloat(newTarget);
-    if (!newName.trim() || isNaN(parsedTarget) || parsedTarget <= 0) {
-      Alert.alert('Error', t('goals.invalidFields', 'Please enter a valid name and target amount'));
-      return;
-    }
-
+  // 🛠️ Η συνάρτηση δέχεται πλέον τα έτοιμα δεδομένα από το Modal component
+  const handleCreateGoal = async (name: string, targetAmount: number, targetDate: Date) => {
     try {
       await database.write(async () => {
         await database.get('saving_goals').create((goal: any) => {
-          goal.name = newName.trim();
-          goal.targetAmount = parsedTarget;
+          goal.name = name;
+          goal.targetAmount = targetAmount;
           goal.currentAmount = 0;
-          goal.targetDate = newDate.getTime();
+          goal.targetDate = targetDate.getTime();
         });
       });
 
       setIsAddModalVisible(false);
-      setNewName('');
-      setNewTarget('');
-      setNewDate(new Date());
       loadGoals();
     } catch (error) {
       console.error('Failed to create goal:', error);
@@ -179,67 +164,16 @@ export default function SavingGoalsScreen() {
         />
       )}
 
-      {/* ➕ ADD GOAL MODAL DIALOG */}
-      <Portal>
-        <Dialog visible={isAddModalVisible} onDismiss={() => setIsAddModalVisible(false)} style={{ backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF', borderRadius: 24 }}>
-          <Dialog.Title style={{ color: isDark ? '#FFFFFF' : '#111827', fontWeight: '700' }}>
-            {t('goals.createTitle', 'Create Saving Goal')}
-          </Dialog.Title>
-          <Dialog.Content>
-            <TextInput
-              label={t('goals.namePlaceholder', 'Goal Name (e.g. Vacation)')}
-              value={newName}
-              onChangeText={setNewName}
-              mode="outlined"
-              style={styles.input}
-              activeOutlineColor="#2563EB"
-              textColor={isDark ? '#FFFFFF' : '#111827'}
-            />
-            <TextInput
-              label={`${t('goals.targetPlaceholder', 'Target Amount')} (${currency})`}
-              value={newTarget}
-              onChangeText={setNewTarget}
-              keyboardType="numeric"
-              mode="outlined"
-              style={[styles.input, { marginTop: 12 }]}
-              activeOutlineColor="#2563EB"
-              textColor={isDark ? '#FFFFFF' : '#111827'}
-            />
-            
-            {/* 🛠️ Δυναμικό Κουμπί Ημερομηνίας που αλλάζει όπως στις συναλλαγές */}
-            <Button 
-              mode="outlined" 
-              onPress={() => setShowDatePicker(true)}
-              style={[styles.datePickerBtn, { borderColor: isDark ? '#4B5563' : '#D1D5DB' }]}
-              textColor={isDark ? '#FFFFFF' : '#111827'}
-            >
-              {format(newDate, 'dd MMMM yyyy', { locale: currentLocale })}
-            </Button>
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button onPress={() => setIsAddModalVisible(false)} textColor={isDark ? '#9CA3AF' : '#6B7280'}>
-              {t('common.cancel', 'Cancel')}
-            </Button>
-            <Button onPress={handleCreateGoal} textColor="#2563EB" labelStyle={{ fontWeight: '700' }} disabled={!newName || !newTarget}>
-              {t('common.create', 'Create')}
-            </Button>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
-
-      {showDatePicker && (
-        <DateTimePicker
-          value={newDate}
-          mode="date"
-          display="default"
-          minimumDate={new Date()}
-          onValueChange={(event, selectedDate) => {
-            setShowDatePicker(false);
-            if (selectedDate) setNewDate(selectedDate);
-          }}
-          onDismiss={() => setShowDatePicker(false)}
-        />
-      )}
+      {/* 🛠️ Rendering του νέου Modular Component */}
+      <AddGoalModal 
+        visible={isAddModalVisible}
+        onDismiss={() => setIsAddModalVisible(false)}
+        onCreate={handleCreateGoal}
+        currency={currency}
+        isDark={isDark}
+        currentLocale={currentLocale}
+        t={t}
+      />
 
     </View>
   );
@@ -250,7 +184,5 @@ const styles = StyleSheet.create({
   centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   listContent: { paddingBottom: 40 },
   emptyContainer: { alignItems: 'center', justifyContent: 'center', padding: 40, marginTop: 40 },
-  emptyText: { fontSize: 14, fontWeight: '500', textAlign: 'center', paddingHorizontal: 20 },
-  input: { backgroundColor: 'transparent' },
-  datePickerBtn: { marginTop: 16, borderRadius: 12, height: 48, justifyContent: 'center' }
+  emptyText: { fontSize: 14, fontWeight: '500', textAlign: 'center', paddingHorizontal: 20 }
 });
