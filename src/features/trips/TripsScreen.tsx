@@ -48,12 +48,13 @@ export default function TripsScreen() {
       
       const now = new Date().getTime();
 
-      // 🛠️ ΕΞΥΠΝΗ ΤΑΞΙΝΟΜΗΣΗ: 1. Ενεργά, 2. Μελλοντικά, 3. Ολοκληρωμένα
+      // 🛠️ ΕΞΥΠΝΗ & ΑΣΦΑΛΗΣ ΤΑΞΙΝΟΜΗΣΗ: 1. Ενεργά, 2. Μελλοντικά, 3. Ολοκληρωμένα
       const sortedTrips = fetchedTrips.sort((a: any, b: any) => {
-        const startA = new Date(a.startDate).getTime();
-        const endA = new Date(a.endDate).getTime();
-        const startB = new Date(b.startDate).getTime();
-        const endB = new Date(b.endDate).getTime();
+        // Θωράκιση από null/undefined ημερομηνίες για αποφυγή NaN crash
+        const startA = a.startDate ? new Date(a.startDate).getTime() : 0;
+        const endA = a.endDate ? new Date(a.endDate).getTime() : 0;
+        const startB = b.startDate ? new Date(b.startDate).getTime() : 0;
+        const endB = b.endDate ? new Date(b.endDate).getTime() : 0;
 
         const isActiveA = now >= startA && now <= endA;
         const isActiveB = now >= startB && now <= endB;
@@ -61,8 +62,13 @@ export default function TripsScreen() {
         if (isActiveA && !isActiveB) return -1;
         if (!isActiveA && isActiveB) return 1;
 
-        // Αν έχουν το ίδιο status, βάλε το πιο πρόσφατο πρώτο
-        return startB - startA;
+        // Αν έχουν το ίδιο status, βάζουμε το πιο πρόσφατο πρώτο
+        if (startA !== startB) {
+          return startB - startA;
+        }
+
+        // Αν έχουν και την ίδια ημερομηνία, ταξινομούμε αλφαβητικά βάσει destination
+        return (a.destination || '').localeCompare(b.destination || '');
       });
 
       setTrips(sortedTrips);
@@ -77,7 +83,7 @@ export default function TripsScreen() {
     try {
       await database.write(async () => {
         await database.get('trips').create((trip: any) => {
-          trip.name = name;
+          trip.destination = name;
           trip.budget = budget;
           trip.startDate = start;
           trip.endDate = end;
@@ -117,7 +123,7 @@ export default function TripsScreen() {
   };
 
   const handleTripPress = (id: string) => {
-    // Αν έχεις οθόνη λεπτομερειών ταξιδιού, πλοηγείσαι εδώ
+    // Θα πλοηγηθεί στο TripDetailScreen όταν το φτιάξουμε!
     // navigation.navigate('TripDetail', { tripId: id });
   };
 

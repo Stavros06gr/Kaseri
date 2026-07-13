@@ -64,7 +64,7 @@ export default function TripCard({ trip, currency, currentLocale, isDark, onDele
             )}
 
             <Text style={[styles.tripName, { color: textColor }]} numberOfLines={1}>
-              {trip.name || 'Unnamed Trip'}
+              {trip.destination || 'Unnamed Trip'}
             </Text>
 
             <Text style={[styles.dateText, { color: subTextColor }]}>
