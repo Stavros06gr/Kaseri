@@ -101,7 +101,11 @@
     "createTitle": "Create Saving Goal",
     "namePlaceholder": "Goal Name (e.g. Vacation)",
     "targetPlaceholder": "Target Amount",
-    "selectDate": "Select Target Date"
+    "selectDate": "Select Target Date",
+    "noDate": "No End Date (Optional)",
+    "noDeadline": "No deadline set",
+    "achieved": "Completed!",
+    "expired": "Overdue!"
   },
   "trips": {
     "plannedTrips": "Planned Trips",

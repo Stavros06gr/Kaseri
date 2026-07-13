@@ -40,8 +40,17 @@ export default function SavingGoalsScreen() {
       setLoading(true);
       const fetchedGoals = await database.get('saving_goals').query().fetch();
       
-      /* 🛠️ Η ΠΡΟΣΘΗΚΗ: Ταξινόμηση σε αύξουσα σειρά (πιο κοντινή ημερομηνία λήξης πρώτα) */
-      const sortedGoals = fetchedGoals.sort((a: any, b: any) => a.targetDate - b.targetDate);
+      /* 🛠️ ΔΙΟΡΘΩΣΗ: Επειδή το targetDate είναι πλέον Date object, παίρνουμε το timestamp με .getTime() για την ταξινόμηση */
+      const sortedGoals = fetchedGoals.sort((a: any, b: any) => {
+        const dateA = a.targetDate ? a.targetDate.getTime() : null;
+        const dateB = b.targetDate ? b.targetDate.getTime() : null;
+
+        if (!dateA && !dateB) return 0;
+        if (!dateA) return 1;
+        if (!dateB) return -1;
+        
+        return dateA - dateB;
+      });
       
       setGoals(sortedGoals);
     } catch (error) {
@@ -51,15 +60,20 @@ export default function SavingGoalsScreen() {
     }
   };
 
-  // 🛠️ Η συνάρτηση δέχεται πλέον τα έτοιμα δεδομένα από το Modal component
-  const handleCreateGoal = async (name: string, targetAmount: number, targetDate: Date) => {
+  const handleCreateGoal = async (
+    name: string, 
+    targetAmount: number, 
+    targetDate: Date | null
+  ): Promise<void> => {
     try {
       await database.write(async () => {
         await database.get('saving_goals').create((goal: any) => {
-          goal.name = name;
+          /* 🛠️ ΔΙΟΡΘΩΣΗ: Αποθήκευση στο 'title' αντί για 'name' */
+          goal.title = name; 
           goal.targetAmount = targetAmount;
           goal.currentAmount = 0;
-          goal.targetDate = targetDate.getTime();
+          /* 🛠️ ΔΙΟΡΘΩΣΗ: Περνάμε αυτούσιο το Date object ή null (το αναλαμβάνει ο @date decorator) */
+          goal.targetDate = targetDate; 
         });
       });
 

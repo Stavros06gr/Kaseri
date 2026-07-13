@@ -23,7 +23,7 @@ import AnalysisChart from './components/AnalysisChart';
 import ActiveTripsList from './components/ActiveTripsList';
 import SavingGoalsList from './components/SavingGoalsList';
 
-type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'MainTabs'>;
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function HomeScreen() {
   const { t } = useTranslation();
@@ -38,7 +38,7 @@ export default function HomeScreen() {
   const [income30Days, setIncome30Days] = useState(0);
   const [expense30Days, setExpense30Days] = useState(0);
   const [activeTrips, setActiveTrips] = useState<TripModel[]>([]);
-  const [savingGoals, setSavingGoals] = useState<SavingGoalModel[]>([]);
+  const [savingGoals, setSavingGoals] = useState<any[]>([]);
 
   useEffect(() => {
     if (isFocused) {
@@ -55,7 +55,6 @@ export default function HomeScreen() {
       const wallets = (await database.get('wallets').query().fetch()) as WalletModel[];
       const visibleWallets = wallets.filter(w => !w.isHidden);
       
-      // Δημιουργούμε ένα γρήγορο Set με τα IDs των εμφανών πορτοφολιών
       const visibleWalletIds = new Set(visibleWallets.map(w => w.id));
 
       const computedBalance = visibleWallets.reduce((sum, w) => sum + w.balance, 0);
@@ -70,7 +69,6 @@ export default function HomeScreen() {
       let exp = 0;
 
       transactions.forEach(tx => {
-        // Σβήνουμε/προσπερνάμε συναλλαγές που ανήκουν σε κρυφά πορτοφόλια
         if (!visibleWalletIds.has(tx.walletId)) return;
 
         if (tx.type === 'income') inc += tx.amount;
@@ -91,7 +89,25 @@ export default function HomeScreen() {
 
       // 4. Αποταμιευτικοί Στόχοι
       const goals = (await database.get('saving_goals').query().fetch()) as SavingGoalModel[];
-      setSavingGoals(goals);
+      
+      /* 🛠️ ΔΙΟΡΘΩΣΗ: Διαβάζουμε το g.title και g.targetDate σύμφωνα με το SavingGoal Model σας */
+      const mappedGoals = goals.map(g => ({
+        id: g.id,
+        name: g.title || 'Unnamed Goal', 
+        currentAmount: g.currentAmount || 0,
+        targetAmount: g.targetAmount || 0,
+        targetDate: g.targetDate ? g.targetDate.getTime() : null 
+      }));
+
+      /* 🛠️ ΔΙΟΡΘΩΣΗ: Έξυπνη ταξινόμηση με τα null στο τέλος */
+      const sortedGoals = mappedGoals.sort((a, b) => {
+        if (!a.targetDate && !b.targetDate) return 0;
+        if (!a.targetDate) return 1;
+        if (!b.targetDate) return -1;
+        return a.targetDate - b.targetDate;
+      });
+      
+      setSavingGoals(sortedGoals);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     }
@@ -101,6 +117,7 @@ export default function HomeScreen() {
     <ScrollView 
       style={[styles.container, { backgroundColor: isDark ? '#121212' : '#F9FAFB' }]} 
       contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 16 }]}
+      showsVerticalScrollIndicator={false}
     >
       <UnifiedBalanceCard
         totalBalance={totalBalance}
