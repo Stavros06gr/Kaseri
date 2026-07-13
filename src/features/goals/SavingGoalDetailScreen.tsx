@@ -68,41 +68,9 @@ export default function SavingGoalDetailScreen() {
     }
   };
 
-  const handleUpdateAmount = async (type: 'deposit' | 'withdraw') => {
-    if (!goal) return;
-    Alert.prompt(
-      type === 'deposit' ? t('goals.addFunds', 'Add Funds') : t('goals.withdrawFunds', 'Withdraw Funds'),
-      t('goals.enterAmount', 'Enter the amount:'),
-      async (val) => {
-        const amt = parseFloat(val);
-        if (isNaN(amt) || amt <= 0) return;
-
-        try {
-          await database.write(async () => {
-            await goal.update((g: any) => {
-              if (type === 'deposit') {
-                g.currentAmount += amt;
-              } else {
-                g.currentAmount = Math.max(g.currentAmount - amt, 0);
-              }
-            });
-
-            await database.get('saving_transfers').create((transfer: any) => {
-              transfer.savingGoalId = goalId;
-              transfer.amount = amt;
-              transfer.type = type;
-              transfer.date = new Date();
-            });
-          });
-          fetchGoalDetails();
-        } catch (error) {
-          console.error('Failed to execute goal transaction:', error);
-        }
-      },
-      'plain-text',
-      '',
-      'numeric'
-    );
+  /* 🛠️ ΔΙΟΡΘΩΣΗ: Πλοήγηση στην οθόνη μεταφοράς αντί για Alert.prompt */
+  const handleUpdateAmount = (type: 'deposit' | 'withdraw') => {
+    navigation.navigate('SavingTransfer', { goalId: goalId, type: type });
   };
 
   if (loading || !goal) {

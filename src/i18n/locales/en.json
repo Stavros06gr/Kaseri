@@ -111,7 +111,12 @@
     "month": "mo.",
     "day": "day",
     "historyTitle": "Contribution History",
-    "emptyHistory": "No transactions recorded for this goal yet."
+    "emptyHistory": "No transactions recorded for this goal yet.",
+    "transferTitle": "Savings Transfer",
+    "sourceWallet": "From Wallet",
+    "destWallet": "To Wallet",
+    "missingSelection": "Please select both a wallet and a goal",
+    "insufficientSavings": "Not enough money in this saving goal"
   },
   "trips": {
     "plannedTrips": "Planned Trips",

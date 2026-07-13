@@ -2,22 +2,27 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, FlatList, Alert } from 'react-native';
 import { ActivityIndicator, Text } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
-import { useIsFocused } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native'; // 🛠️ Προσθήκη useNavigation
+import { NativeStackNavigationProp } from '@react-navigation/native-stack'; // 🛠️ Προσθήκη τύπου πλοήγησης
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Target as TargetIcon } from 'lucide-react-native';
 import { el, enUS } from 'date-fns/locale';
 
 import { database } from '../../database';
 import { useAppStore } from '../../store/useAppStore';
+import { RootStackParamList } from '../../navigation/types'; // 🛠️ Προσθήκη RootStackParamList
 
 // Components
 import SavingGoalsHeader from './components/SavingGoalsHeader';
 import SavingGoalCard from './components/SavingGoalCard';
-import AddGoalModal from './components/AddGoalModal'; // 👈 Εισαγωγή του νέου component
+import AddGoalModal from './components/AddGoalModal';
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function SavingGoalsScreen() {
   const { t } = useTranslation();
   const isFocused = useIsFocused();
+  const navigation = useNavigation<NavigationProp>(); // 🛠️ Αρχικοποίηση Navigation
   const insets = useSafeAreaInsets();
 
   const { currency, theme, language } = useAppStore();
@@ -40,7 +45,6 @@ export default function SavingGoalsScreen() {
       setLoading(true);
       const fetchedGoals = await database.get('saving_goals').query().fetch();
       
-      /* 🛠️ ΔΙΟΡΘΩΣΗ: Επειδή το targetDate είναι πλέον Date object, παίρνουμε το timestamp με .getTime() για την ταξινόμηση */
       const sortedGoals = fetchedGoals.sort((a: any, b: any) => {
         const dateA = a.targetDate ? a.targetDate.getTime() : null;
         const dateB = b.targetDate ? b.targetDate.getTime() : null;
@@ -68,11 +72,9 @@ export default function SavingGoalsScreen() {
     try {
       await database.write(async () => {
         await database.get('saving_goals').create((goal: any) => {
-          /* 🛠️ ΔΙΟΡΘΩΣΗ: Αποθήκευση στο 'title' αντί για 'name' */
           goal.title = name; 
           goal.targetAmount = targetAmount;
           goal.currentAmount = 0;
-          /* 🛠️ ΔΙΟΡΘΩΣΗ: Περνάμε αυτούσιο το Date object ή null (το αναλαμβάνει ο @date decorator) */
           goal.targetDate = targetDate; 
         });
       });
@@ -84,34 +86,9 @@ export default function SavingGoalsScreen() {
     }
   };
 
-  const handleUpdateAmount = async (id: string, type: 'deposit' | 'withdraw') => {
-    Alert.prompt(
-      type === 'deposit' ? t('goals.addFunds', 'Add Funds') : t('goals.withdrawFunds', 'Withdraw Funds'),
-      t('goals.enterAmount', 'Enter the amount:'),
-      async (val) => {
-        const amt = parseFloat(val);
-        if (isNaN(amt) || amt <= 0) return;
-
-        try {
-          await database.write(async () => {
-            const goal = await database.get('saving_goals').find(id);
-            await goal.update((g: any) => {
-              if (type === 'deposit') {
-                g.currentAmount += amt;
-              } else {
-                g.currentAmount = Math.max(g.currentAmount - amt, 0);
-              }
-            });
-          });
-          loadGoals();
-        } catch (error) {
-          console.error('Failed to update goal amount:', error);
-        }
-      },
-      'plain-text',
-      '',
-      'numeric'
-    );
+  /* 🛠️ ΔΙΟΡΘΩΣΗ: Πλοήγηση στη νέα οθόνη μεταφοράς αντί για Alert.prompt */
+  const handleUpdateAmount = (id: string, type: 'deposit' | 'withdraw') => {
+    navigation.navigate('SavingTransfer', { goalId: id, type: type });
   };
 
   const handleDeleteGoal = async (id: string) => {
@@ -182,7 +159,6 @@ export default function SavingGoalsScreen() {
         />
       )}
 
-      {/* 🛠️ Rendering του νέου Modular Component */}
       <AddGoalModal 
         visible={isAddModalVisible}
         onDismiss={() => setIsAddModalVisible(false)}
