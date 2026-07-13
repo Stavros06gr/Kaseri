@@ -166,6 +166,7 @@ export default function HomeScreen() {
         goals={savingGoals}
         isDark={isDark}
         titleLabel={t('home.savingGoals', 'Saving Goals')}
+        onGoalPress={(id) => navigation.navigate('SavingGoalDetail', { goalId: id })}
       />
     </ScrollView>
   );
