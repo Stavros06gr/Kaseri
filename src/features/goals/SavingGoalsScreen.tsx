@@ -6,6 +6,8 @@ import { useIsFocused } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Target as TargetIcon } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { format } from 'date-fns'; // 👈 Εισαγωγή format
+import { el, enUS } from 'date-fns/locale'; // 👈 Εισαγωγή locales
 
 import { database } from '../../database';
 import { useAppStore } from '../../store/useAppStore';
@@ -21,6 +23,7 @@ export default function SavingGoalsScreen() {
 
   const { currency, theme, language } = useAppStore();
   const isDark = theme === 'dark';
+  const currentLocale = language === 'gr' ? el : enUS; // 👈 Ορισμός Locale
 
   // Data States
   const [loading, setLoading] = useState(true);
@@ -42,7 +45,6 @@ export default function SavingGoalsScreen() {
   const loadGoals = async () => {
     try {
       setLoading(true);
-      // Αναζήτηση των στόχων στη WatermelonDB
       const fetchedGoals = await database.get('saving_goals').query().fetch();
       setGoals(fetchedGoals);
     } catch (error) {
@@ -64,12 +66,11 @@ export default function SavingGoalsScreen() {
         await database.get('saving_goals').create((goal: any) => {
           goal.name = newName.trim();
           goal.targetAmount = parsedTarget;
-          goal.currentAmount = 0; // Ξεκινάει από το μηδέν
+          goal.currentAmount = 0;
           goal.targetDate = newDate.getTime();
         });
       });
 
-      // Reset Form & Reload
       setIsAddModalVisible(false);
       setNewName('');
       setNewTarget('');
@@ -95,7 +96,7 @@ export default function SavingGoalsScreen() {
               if (type === 'deposit') {
                 g.currentAmount += amt;
               } else {
-                g.currentAmount = Math.max(g.currentAmount - amt, 0); // Δεν επιτρέπουμε αρνητικό απόθεμα
+                g.currentAmount = Math.max(g.currentAmount - amt, 0);
               }
             });
           });
@@ -205,14 +206,14 @@ export default function SavingGoalsScreen() {
               textColor={isDark ? '#FFFFFF' : '#111827'}
             />
             
-            {/* Target Date Trigger */}
+            {/* 🛠️ Δυναμικό Κουμπί Ημερομηνίας που αλλάζει όπως στις συναλλαγές */}
             <Button 
               mode="outlined" 
               onPress={() => setShowDatePicker(true)}
               style={[styles.datePickerBtn, { borderColor: isDark ? '#4B5563' : '#D1D5DB' }]}
               textColor={isDark ? '#FFFFFF' : '#111827'}
             >
-              {t('goals.selectDate', 'Select End Date')}
+              {format(newDate, 'dd MMMM yyyy', { locale: currentLocale })}
             </Button>
           </Dialog.Content>
           <Dialog.Actions>
@@ -231,7 +232,7 @@ export default function SavingGoalsScreen() {
           value={newDate}
           mode="date"
           display="default"
-          minimumDate={new Date()} // Δεν επιτρέπουμε ημερομηνίες στο παρελθόν
+          minimumDate={new Date()}
           onValueChange={(event, selectedDate) => {
             setShowDatePicker(false);
             if (selectedDate) setNewDate(selectedDate);
