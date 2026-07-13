@@ -56,7 +56,13 @@ export default function AddTripModal({ visible, onDismiss, onCreate, currency, i
   const textColor = isDark ? '#FFFFFF' : '#111827';
 
   return (
-    <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onDismiss}>
+    <Modal 
+      visible={visible} 
+      /* 🛠️ ΑΛΛΑΓΗ: fade αντί για slide για πιο φυσικό κεντραρισμένο εφέ */
+      animationType="fade" 
+      transparent={true} 
+      onRequestClose={onDismiss}
+    >
       <View style={styles.modalOverlay}>
         <Surface style={[styles.modalContent, { backgroundColor: cardBg }]} mode="flat">
           
@@ -91,18 +97,22 @@ export default function AddTripModal({ visible, onDismiss, onCreate, currency, i
           {/* DATE PICKERS ROW */}
           <View style={styles.datesRow}>
             <TouchableOpacity style={[styles.dateBlock, { borderColor: isDark ? '#4B5563' : '#D1D5DB' }]} onPress={() => setShowStartPicker(true)}>
-              <Text style={styles.dateLabel}>{t('trips.start', 'Start Date')}</Text>
+              <Text style={styles.dateLabel}>{t('trips.start', 'Start')}</Text>
               <View style={styles.dateValueRow}>
                 <Calendar size={14} color="#2563EB" style={{ marginRight: 6 }} />
-                <Text style={{ color: textColor, fontWeight: '600' }}>{format(startDate, 'dd MMM yyyy', { locale: currentLocale })}</Text>
+                <Text style={{ color: textColor, fontWeight: '600', fontSize: 12 }} numberOfLines={1}>
+                  {format(startDate, 'dd MMM yy', { locale: currentLocale })}
+                </Text>
               </View>
             </TouchableOpacity>
 
             <TouchableOpacity style={[styles.dateBlock, { borderColor: isDark ? '#4B5563' : '#D1D5DB' }]} onPress={() => setShowEndPicker(true)}>
-              <Text style={styles.dateLabel}>{t('trips.end', 'End Date')}</Text>
+              <Text style={styles.dateLabel}>{t('trips.end', 'End')}</Text>
               <View style={styles.dateValueRow}>
                 <Calendar size={14} color="#EF4444" style={{ marginRight: 6 }} />
-                <Text style={{ color: textColor, fontWeight: '600' }}>{format(endDate, 'dd MMM yyyy', { locale: currentLocale })}</Text>
+                <Text style={{ color: textColor, fontWeight: '600', fontSize: 12 }} numberOfLines={1}>
+                  {format(endDate, 'dd MMM yy', { locale: currentLocale })}
+                </Text>
               </View>
             </TouchableOpacity>
           </View>
@@ -144,13 +154,32 @@ export default function AddTripModal({ visible, onDismiss, onCreate, currency, i
 }
 
 const styles = StyleSheet.create({
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  modalContent: { borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 24, paddingBottom: 40 },
+  /* 🛠️ ΑΛΛΑΓΗ: Κεντράρισμα του overlay σε όλη την οθόνη */
+  modalOverlay: { 
+    flex: 1, 
+    backgroundColor: 'rgba(0,0,0,0.6)', // Ελαφρώς πιο σκούρο backdrop για καλύτερη αντίθεση
+    justifyContent: 'center', 
+    alignItems: 'center',
+    padding: 20
+  },
+  /* 🛠️ ΑΛΛΑΓΗ: Στρογγυλεμένες γωνίες παντού και περιορισμός πλάτους */
+  modalContent: { 
+    borderRadius: 24, 
+    padding: 24, 
+    width: '100%',
+    maxWidth: 360, // Ιδανικό πλάτος για να φαίνεται σωστά σε κάθε συσκευή
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8
+  },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   modalTitle: { fontSize: 20, fontWeight: '800', letterSpacing: -0.4 },
   input: { marginBottom: 16, backgroundColor: 'transparent' },
   datesRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 24 },
-  dateBlock: { flex: 1, borderWidth: 1, borderRadius: 14, padding: 12, marginHorizontal: 4 },
+  /* Μειώσαμε ελάχιστα το padding για να χωράνε άνετα οι ημερομηνίες σε μικρότερα κινητά */
+  dateBlock: { flex: 1, borderWidth: 1, borderRadius: 14, padding: 10, marginHorizontal: 4 },
   dateLabel: { fontSize: 11, color: '#6B7280', fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 },
   dateValueRow: { flexDirection: 'row', alignItems: 'center' },
   submitBtn: { height: 50, borderRadius: 16, justifyContent: 'center' },
