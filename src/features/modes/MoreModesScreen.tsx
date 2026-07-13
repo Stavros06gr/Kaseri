@@ -36,7 +36,7 @@ export default function MoreModesScreen() {
     {
       id: 'own',
       title: t('modes.ownTitle', 'Own'),
-      description: t('modes.ownDesc', 'Personalized tools & customized logs'),
+      description: t('modes.ownDesc', 'Track what you owe and what others owe you'),
       route: 'Own' as const,
       icon: Sparkles,
       iconColor: '#7C3AED', // Premium Violet

@@ -21,6 +21,7 @@ import SavingGoalDetail from '../features/goals/SavingGoalDetailScreen';
 import SavingTransfer from '../features/goals/SavingTransferScreen';
 import TripsScreen from '../features/trips/TripsScreen';
 import TripDetail from '../features/trips/TripDetailScreen';
+import OwnScreen from '../features/modes/OwnScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -96,7 +97,7 @@ export default function RootNavigator() {
       <Stack.Screen name="SavingTransfer" component={SavingTransfer} />
       <Stack.Screen name="Trips" component={TripsScreen} />
       <Stack.Screen name="TripDetail" component={TripDetail} />
-      <Stack.Screen name="Own" component={OwnDummy} />
+      <Stack.Screen name="Own" component={OwnScreen} />
       <Stack.Screen name="FuelCalculator" component={FuelCalculatorDummy} />
       <Stack.Screen name="SubscriptionManager" component={SubscriptionManagerDummy} />
       <Stack.Screen name="CategoryStatistics" component={CategoryStatisticsDummy} />
