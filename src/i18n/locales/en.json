@@ -91,12 +91,17 @@
     "noMonthlyExpenses": "No expense logs recorded for this month"
   },
   "goals": {
-    "newGoal": "New Saving Goal",
-    "targetAmount": "Target Amount",
-    "targetDate": "Target Date",
-    "newTransfer": "New Saving Transfer",
-    "add": "Add",
-    "remove": "Remove"
+    "title": "Savings Goals",
+    "newBtn": "New Goal",
+    "until": "Target:",
+    "missing": "Remaining:",
+    "withdraw": "Withdraw",
+    "deposit": "Add Funds",
+    "emptyState": "No savings goals set yet. Build your first vault now!",
+    "createTitle": "Create Saving Goal",
+    "namePlaceholder": "Goal Name (e.g. Vacation)",
+    "targetPlaceholder": "Target Amount",
+    "selectDate": "Select Target Date"
   },
   "trips": {
     "plannedTrips": "Planned Trips",

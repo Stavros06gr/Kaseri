@@ -15,7 +15,8 @@ import IncomeScreen from '../features/transactions/IncomeScreen';
 import ExpenseScreen from '../features/transactions/ExpenseScreen';
 import TransferScreen from '../features/transactions/TransferScreen';
 import EditTransactionScreen from '../features/transactions/EditTransactionScreen';
-import MonthlySummariesScreen from '../features/summaries/MonthlySummariesScreen'
+import MonthlySummariesScreen from '../features/summaries/MonthlySummariesScreen';
+import SavingGoalsScreen from '../features/goals/SavingGoalsScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -86,6 +87,7 @@ export default function RootNavigator() {
       <Stack.Screen name="EditTransaction" component={EditTransactionScreen} />
       <Stack.Screen name="MonthlySummaries" component={MonthlySummariesScreen} />
       <Stack.Screen name="MonthlySummaryDetail" component={MonthlySummaryDetailDummy} />
+      <Stack.Screen name="SavingGoals" component={SavingGoalsScreen} />
       <Stack.Screen name="SavingGoalDetail" component={SavingGoalDetailDummy} />
       <Stack.Screen name="SavingTransfer" component={SavingTransferDummy} />
       <Stack.Screen name="TripDetail" component={TripDetailDummy} />

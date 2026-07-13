@@ -29,6 +29,7 @@ export type RootStackParamList = {
   MonthlySummaryDetail: { year: number; month: number };
   
   // Στόχοι & Ταξίδια
+  SavingGoals: undefined;
   SavingGoalDetail: { goalId: string };
   SavingTransfer: { goalId: string };
   TripDetail: { tripId: string };
