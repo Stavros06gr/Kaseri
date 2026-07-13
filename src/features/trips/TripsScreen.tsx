@@ -46,11 +46,27 @@ export default function TripsScreen() {
       setLoading(true);
       const fetchedTrips = (await database.get('trips').query().fetch()) as TripModel[];
       
+      // 🛠️ ΔΙΟΡΘΩΣΗ: Φορτώνουμε τις συναλλαγές για κάθε ταξίδι και υπολογίζουμε το totalExpenses
+      const tripsWithExpenses = await Promise.all(
+        fetchedTrips.map(async (trip) => {
+          const txs = await trip.transactions.fetch();
+          const totalExpenses = txs.reduce((sum: number, tx: any) => sum + (tx.amount || 0), 0);
+          
+          // Ορίζουμε με ασφάλεια το property totalExpenses πάνω στο instance του μοντέλου
+          Object.defineProperty(trip, 'totalExpenses', {
+            value: totalExpenses,
+            writable: true,
+            enumerable: true,
+            configurable: true
+          });
+          return trip;
+        })
+      );
+
       const now = new Date().getTime();
 
-      // 🛠️ ΕΞΥΠΝΗ & ΑΣΦΑΛΗΣ ΤΑΞΙΝΟΜΗΣΗ: 1. Ενεργά, 2. Μελλοντικά, 3. Ολοκληρωμένα
-      const sortedTrips = fetchedTrips.sort((a: any, b: any) => {
-        // Θωράκιση από null/undefined ημερομηνίες για αποφυγή NaN crash
+      // ΕΞΥΠΝΗ & ΑΣΦΑΛΗΣ ΤΑΞΙΝΟΜΗΣΗ
+      const sortedTrips = tripsWithExpenses.sort((a: any, b: any) => {
         const startA = a.startDate ? new Date(a.startDate).getTime() : 0;
         const endA = a.endDate ? new Date(a.endDate).getTime() : 0;
         const startB = b.startDate ? new Date(b.startDate).getTime() : 0;
@@ -62,12 +78,10 @@ export default function TripsScreen() {
         if (isActiveA && !isActiveB) return -1;
         if (!isActiveA && isActiveB) return 1;
 
-        // Αν έχουν το ίδιο status, βάζουμε το πιο πρόσφατο πρώτο
         if (startA !== startB) {
           return startB - startA;
         }
 
-        // Αν έχουν και την ίδια ημερομηνία, ταξινομούμε αλφαβητικά βάσει destination
         return (a.destination || '').localeCompare(b.destination || '');
       });
 

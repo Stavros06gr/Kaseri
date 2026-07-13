@@ -85,7 +85,23 @@ export default function HomeScreen() {
         const end = new Date(trip.endDate).getTime();
         return now >= start && now <= end;
       });
-      setActiveTrips(currentTrips);
+      
+      const currentTripsWithExpenses = await Promise.all(
+        currentTrips.map(async (trip) => {
+          const txs = await trip.transactions.fetch();
+          const totalExpenses = txs.reduce((sum: number, tx: any) => sum + (tx.amount || 0), 0);
+          
+          Object.defineProperty(trip, 'totalExpenses', {
+            value: totalExpenses,
+            writable: true,
+            enumerable: true,
+            configurable: true
+          });
+          return trip;
+        })
+      );
+
+      setActiveTrips(currentTripsWithExpenses);
 
       // 4. Αποταμιευτικοί Στόχοι
       const goals = (await database.get('saving_goals').query().fetch()) as SavingGoalModel[];
