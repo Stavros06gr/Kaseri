@@ -32,6 +32,7 @@ export type RootStackParamList = {
   SavingGoals: undefined;
   SavingGoalDetail: { goalId: string };
   SavingTransfer: { goalId?: string; type?: 'deposit' | 'withdraw' };
+  Trips: undefined;
   TripDetail: { tripId: string };
   
   // Επιπλέον Modes
