@@ -39,7 +39,11 @@ export default function SavingGoalsScreen() {
     try {
       setLoading(true);
       const fetchedGoals = await database.get('saving_goals').query().fetch();
-      setGoals(fetchedGoals);
+      
+      /* 🛠️ Η ΠΡΟΣΘΗΚΗ: Ταξινόμηση σε αύξουσα σειρά (πιο κοντινή ημερομηνία λήξης πρώτα) */
+      const sortedGoals = fetchedGoals.sort((a: any, b: any) => a.targetDate - b.targetDate);
+      
+      setGoals(sortedGoals);
     } catch (error) {
       console.error('Failed to load saving goals:', error);
     } finally {
