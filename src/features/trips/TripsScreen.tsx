@@ -123,8 +123,7 @@ export default function TripsScreen() {
   };
 
   const handleTripPress = (id: string) => {
-    // Θα πλοηγηθεί στο TripDetailScreen όταν το φτιάξουμε!
-    // navigation.navigate('TripDetail', { tripId: id });
+    navigation.navigate('TripDetail', { tripId: id });
   };
 
   return (

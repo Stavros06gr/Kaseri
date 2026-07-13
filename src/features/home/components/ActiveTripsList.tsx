@@ -65,7 +65,7 @@ export default function ActiveTripsList({ trips, currency, isDark, noBudgetLabel
         return (
           <Surface key={trip.id} style={[styles.card, { backgroundColor: cardBg }]} mode="flat">
             <TouchableOpacity 
-              onPress={() => navigation.navigate('Trips')} 
+              onPress={() => navigation.navigate('TripDetail', { tripId: trip.id })}
               activeOpacity={0.7}
               style={styles.clickable}
             >
