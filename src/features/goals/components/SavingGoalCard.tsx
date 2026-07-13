@@ -8,6 +8,7 @@ import { formatMoney } from '../../../utils/math';
 import { format } from 'date-fns';
 import { el, enUS } from 'date-fns/locale';
 import { RootStackParamList } from '../../../navigation/types';
+import { useAppStore } from '../../../store/useAppStore'; // 🛠️ Εισαγωγή του store
 
 interface Props {
   goal: { id: string; title: string; targetAmount: number; currentAmount: number; targetDate?: Date | null };
@@ -26,6 +27,9 @@ export default function SavingGoalCard({ goal, currency, language, isDark, onDep
   const currentLocale = language === 'gr' ? el : enUS;
   const navigation = useNavigation<NavigationProp>();
   
+  /* 🛠️ ΔΙΟΡΘΩΣΗ: Bulletproof Selector για το Hide Balance */
+  const hideBalance = useAppStore(state => state.hideBalance); 
+
   const percentage = goal.targetAmount > 0 ? (goal.currentAmount / goal.targetAmount) * 100 : 0;
   const progress = Math.min(Math.max(percentage / 100, 0), 1);
   const remaining = Math.max(goal.targetAmount - goal.currentAmount, 0);
@@ -36,9 +40,13 @@ export default function SavingGoalCard({ goal, currency, language, isDark, onDep
 
   const subTextColor = isDark ? '#9CA3AF' : '#6B7280';
 
+  /* 🛠️ Διαχείριση Απόκρυψης Ποσών */
+  const displayCurrent = hideBalance ? '****' : `${formatMoney(goal.currentAmount)} ${currency}`;
+  const displayTarget = hideBalance ? '****' : `/ ${formatMoney(goal.targetAmount)} ${currency}`;
+  const displayRemaining = hideBalance ? '****' : `${formatMoney(remaining)} ${currency}`;
+
   return (
     <Surface style={[styles.card, { backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF' }]} mode="flat">
-      {/* 🛠️ Η ΣΥΝΔΕΣΗ: Πατώντας το σώμα της κάρτας, πλοηγούμαστε στα Details */}
       <TouchableOpacity 
         onPress={() => navigation.navigate('SavingGoalDetail', { goalId: goal.id })} 
         activeOpacity={0.7}
@@ -64,7 +72,6 @@ export default function SavingGoalCard({ goal, currency, language, isDark, onDep
             )}
           </View>
           
-          {/* Κουμπί Διαγραφής */}
           <TouchableOpacity onPress={() => onDelete(goal.id)} style={styles.deleteBtn} hitSlop={10}>
             <Trash2 size={16} color={isDark ? '#4B5563' : '#9CA3AF'} />
           </TouchableOpacity>
@@ -72,10 +79,10 @@ export default function SavingGoalCard({ goal, currency, language, isDark, onDep
 
         <View style={styles.amountRow}>
           <Text style={[styles.currentAmount, { color: isAchieved ? '#10B981' : '#2563EB' }]}>
-            {formatMoney(goal.currentAmount)} {currency}
+            {displayCurrent}
           </Text>
           <Text style={[styles.targetAmount, { color: subTextColor }]}>
-            / {formatMoney(goal.targetAmount)} {currency}
+            {displayTarget}
           </Text>
         </View>
 
@@ -88,7 +95,7 @@ export default function SavingGoalCard({ goal, currency, language, isDark, onDep
 
         {remaining > 0 && (
           <Text style={[styles.remainingText, { color: subTextColor }]}>
-            {t('goals.missing', 'Remaining:')} <Text style={styles.boldAmount}>{formatMoney(remaining)} {currency}</Text>
+            {t('goals.missing', 'Remaining:')} <Text style={styles.boldAmount}>{displayRemaining}</Text>
           </Text>
         )}
       </TouchableOpacity>
