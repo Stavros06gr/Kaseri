@@ -14,12 +14,15 @@ import { useAppStore } from '../../store/useAppStore';
 import { RootStackParamList } from '../../navigation/types';
 import WalletModel from '../../database/models/Wallet';
 import TransactionModel from '../../database/models/Transaction';
+import TripModel from '../../database/models/Trip';
 
 // Imports των νέων Expense Components
 import ExpenseHeader from './components/ExpenseHeader';
 import ExpenseAmountCard from './components/ExpenseAmountCard';
 import ExpenseDetailsCard from './components/ExpenseDetailsCard';
 import ExpenseWalletDialog from './components/ExpenseWalletDialog';
+/* 🛠️ Η ΝΕΑ ΚΑΘΑΡΗ ΕΙΣΑΓΩΓΗ */
+import ActiveTripCheckboxes from './components/ActiveTripCheckboxes'; 
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'MainTabs'>;
 
@@ -41,6 +44,11 @@ export default function ExpenseScreen() {
   const [selectedWalletName, setSelectedWalletName] = useState('');
   const [date, setDate] = useState(new Date());
 
+  // Trip States
+  const [allTrips, setAllTrips] = useState<TripModel[]>([]);
+  const [activeTrips, setActiveTrips] = useState<TripModel[]>([]);
+  const [selectedTripId, setSelectedTripId] = useState<string>('');
+
   // UI Visibility States
   const [wallets, setWallets] = useState<WalletModel[]>([]);
   const [isWalletDialogVisible, setIsWalletDialogVisible] = useState(false);
@@ -49,18 +57,53 @@ export default function ExpenseScreen() {
   useEffect(() => {
     if (isFocused) {
       loadWallets();
+      loadTrips();
     }
   }, [isFocused]);
 
+  useEffect(() => {
+    if (allTrips.length === 0) {
+      setActiveTrips([]);
+      setSelectedTripId('');
+      return;
+    }
+
+    const txTime = date.getTime();
+    const filtered = allTrips.filter((trip) => {
+      if (!trip.startDate || !trip.endDate) return false;
+      const start = new Date(trip.startDate).getTime();
+      const end = new Date(trip.endDate).getTime();
+      return txTime >= start && txTime <= end;
+    });
+
+    setActiveTrips(filtered);
+
+    if (filtered.length > 0) {
+      const isStillActive = filtered.some(t => t.id === selectedTripId);
+      if (!isStillActive) {
+        setSelectedTripId(filtered[0].id);
+      }
+    } else {
+      setSelectedTripId('');
+    }
+  }, [date, allTrips]);
+
+  const loadTrips = async () => {
+    try {
+      const tripRecords = (await database.get('trips').query().fetch()) as TripModel[];
+      setAllTrips(tripRecords);
+    } catch (error) {
+      console.error('Error loading trips:', error);
+    }
+  };
+
   const loadWallets = async () => {
     try {
-      // 1. Φόρτωση και ταξινόμηση από το μεγαλύτερο balance στο μικρότερο
       const walletRecords = (await database.get('wallets').query().fetch()) as WalletModel[];
       const sortedWallets = walletRecords.sort((a, b) => b.balance - a.balance);
       setWallets(sortedWallets);
       
       if (sortedWallets.length > 0 && !selectedWalletId) {
-        // 2. Εύρεση της last χρησιμοποιημένης συσκευής/πορτοφολιού
         const lastTransactions = (await database.get('transactions')
           .query(Q.sortBy('date', Q.desc), Q.take(1))
           .fetch()) as TransactionModel[];
@@ -77,7 +120,15 @@ export default function ExpenseScreen() {
         setSelectedWalletName(targetWallet.name);
       }
     } catch (error) {
-      console.error('Error loading wallets for expense:', error);
+      console.error('Error loading wallets:', error);
+    }
+  };
+
+  const handleSelectTrip = (id: string) => {
+    if (selectedTripId === id) {
+      setSelectedTripId('');
+    } else {
+      setSelectedTripId(id);
     }
   };
 
@@ -94,7 +145,6 @@ export default function ExpenseScreen() {
 
     try {
       await database.write(async () => {
-        // 1. Δημιουργία της συναλλαγής εξόδου
         await database.get('transactions').create((tx: any) => {
           tx.amount = parsedAmount;
           tx.type = 'expense';
@@ -102,18 +152,21 @@ export default function ExpenseScreen() {
           tx.category = category.trim() || t('transactions.defaultExpenseCat', 'General');
           tx.description = description.trim();
           tx.date = date.getTime();
+          
+          if (selectedTripId) {
+            tx.tripId = selectedTripId;
+          }
         });
 
-        // 2. Ενημέρωση πορτοφολιού (Αφαίρεση ποσού)
         const wallet = (await database.get('wallets').find(selectedWalletId)) as WalletModel;
         await wallet.update((w: any) => {
-          w.balance -= parsedAmount; // Αφαίρεση χρημάτων
+          w.balance -= parsedAmount;
         });
       });
 
       navigation.goBack();
     } catch (error) {
-      console.error('Failed to save expense transaction:', error);
+      console.error('Failed to save expense:', error);
     }
   };
 
@@ -147,6 +200,15 @@ export default function ExpenseScreen() {
           onWalletPress={() => setIsWalletDialogVisible(true)}
           onDatePress={() => setShowDatePicker(true)}
           locale={currentLocale}
+          isDark={isDark}
+          t={t}
+        />
+
+        {/* 🛠️ ΚΛΗΣΗ ΤΟΥ ΝΕΟΥ COMPONENT */}
+        <ActiveTripCheckboxes 
+          activeTrips={activeTrips}
+          selectedTripId={selectedTripId}
+          onSelectTrip={handleSelectTrip}
           isDark={isDark}
           t={t}
         />
@@ -201,6 +263,6 @@ export default function ExpenseScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   scrollContent: { paddingHorizontal: 20, paddingBottom: 40 },
-  saveButton: { borderRadius: 14, marginTop: 8 },
+  saveButton: { borderRadius: 14, marginTop: 12 },
   saveButtonContent: { height: 50 }
 });

@@ -15,10 +15,13 @@ import { useAppStore } from '../../store/useAppStore';
 import { RootStackParamList } from '../../navigation/types';
 import WalletModel from '../../database/models/Wallet';
 import TransactionModel from '../../database/models/Transaction';
+import TripModel from '../../database/models/Trip';
 
 import EditTransactionHeader from './components/EditTransactionHeader';
 import EditAmountCard from './components/EditAmountCard';
 import EditDetailsCard from './components/EditDetailsCard';
+/* 🛠️ Η ΝΕΑ ΚΑΘΑΡΗ ΕΙΣΑΓΩΓΗ */
+import ActiveTripCheckboxes from './components/ActiveTripCheckboxes';
 
 type EditTxRouteProp = RouteProp<RootStackParamList, 'EditTransaction'>;
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -44,20 +47,67 @@ export default function EditTransactionScreen() {
   const [description, setDescription] = useState('');
   const [date, setDate] = useState(new Date());
   
+  // Trip States
+  const [allTrips, setAllTrips] = useState<TripModel[]>([]);
+  const [activeTrips, setActiveTrips] = useState<TripModel[]>([]);
+  const [selectedTripId, setSelectedTripId] = useState<string>('');
+  const [hasInitializedTrip, setHasInitializedTrip] = useState(false);
+
   // UI States
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isDeleteDialogVisible, setIsDeleteDialogVisible] = useState(false);
 
   useEffect(() => {
     loadTransaction();
+    loadTrips();
   }, [transactionId]);
+
+  useEffect(() => {
+    if (allTrips.length === 0) return;
+
+    const txTime = date.getTime();
+    const filtered = allTrips.filter((trip) => {
+      if (!trip.startDate || !trip.endDate) return false;
+      const start = new Date(trip.startDate).getTime();
+      const end = new Date(trip.endDate).getTime();
+      return txTime >= start && txTime <= end;
+    });
+
+    setActiveTrips(filtered);
+
+    if (!hasInitializedTrip && transaction) {
+      if (transaction.tripId) {
+        setSelectedTripId(transaction.tripId);
+      } else if (filtered.length > 0) {
+        setSelectedTripId(filtered[0].id);
+      }
+      setHasInitializedTrip(true);
+    } else {
+      if (filtered.length > 0) {
+        const isStillActive = filtered.some(t => t.id === selectedTripId);
+        if (!isStillActive) {
+          setSelectedTripId(filtered[0].id);
+        }
+      } else {
+        setSelectedTripId('');
+      }
+    }
+  }, [date, allTrips, transaction]);
+
+  const loadTrips = async () => {
+    try {
+      const tripRecords = (await database.get('trips').query().fetch()) as TripModel[];
+      setAllTrips(tripRecords);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const loadTransaction = async () => {
     try {
       const tx = (await database.get('transactions').find(transactionId)) as TransactionModel;
       setTransaction(tx);
       
-      // Χρησιμοποιούμε Math.abs επειδή στη βάση οι μεταφορές/έξοδα μπορεί να έχουν αρνητικό πρόσημο
       setAmount(Math.abs(tx.amount).toString());
       setCategory(tx.category || '');
       setDescription(tx.description || '');
@@ -69,6 +119,14 @@ export default function EditTransactionScreen() {
       console.error('Failed to load transaction:', error);
       Alert.alert('Error', 'Transaction not found');
       navigation.goBack();
+    }
+  };
+
+  const handleSelectTrip = (id: string) => {
+    if (selectedTripId === id) {
+      setSelectedTripId('');
+    } else {
+      setSelectedTripId(id);
     }
   };
 
@@ -84,15 +142,13 @@ export default function EditTransactionScreen() {
       await database.write(async () => {
         const wallet = (await database.get('wallets').find(transaction.walletId)) as WalletModel;
         
-        // 🔒 Κρατάμε τις αρχικές τιμές ΠΡΙΝ τις μεταβολές για να μην τις χάσουμε στα queries
         const oldAbs = Math.abs(transaction.amount);
         const originalTime = transaction.date.getTime();
         const newTime = date.getTime();
 
-        // 🟢 ΠΕΡΙΠΤΩΣΗ: INCOME (ΕΣΟΔΟ)
         if (transaction.type === 'income') {
           await wallet.update((w: any) => {
-            w.balance = w.balance - oldAbs + newAbs; // Αφαίρεση παλιάς εισροής, προσθήκη νέας
+            w.balance = w.balance - oldAbs + newAbs;
           });
           await transaction.update((t: any) => {
             t.amount = newAbs;
@@ -101,25 +157,21 @@ export default function EditTransactionScreen() {
             t.date = newTime;
           });
         } 
-        
-        // 🔴 ΠΕΡΙΠΤΩΣΗ: EXPENSE (ΕΞΟΔΟ)
         else if (transaction.type === 'expense') {
           await wallet.update((w: any) => {
-            w.balance = w.balance + oldAbs - newAbs; // Επιστροφή παλιάς εκροής, αφαίρεση νέας
+            w.balance = w.balance + oldAbs - newAbs;
           });
           await transaction.update((t: any) => {
-            t.amount = newAbs; // Διατηρείται θετικό βάσει schema
+            t.amount = newAbs;
             t.category = category.trim();
             t.description = description.trim();
             t.date = newTime;
+            t.tripId = selectedTripId || null;
           });
         } 
-        
-        // 🔵 ΠΕΡΙΠΤΩΣΗ: TRANSFER (ΜΕΤΑΦΟΡΑ - DOUBLE ENTRY)
         else if (transaction.type === 'transfer') {
           const isSender = transaction.amount < 0;
 
-          // 1. Ψάχνουμε το sibling entry χρησιμοποιώντας το ORIGINAL timestamp
           const siblingTx = (await database.get('transactions')
             .query(
               Q.where('date', originalTime),
@@ -127,23 +179,20 @@ export default function EditTransactionScreen() {
               Q.where('id', Q.notEq(transaction.id))
             ).fetch()) as TransactionModel[];
 
-          // 2. Ενημερώνουμε το τρέχον πορτοφόλι
           await wallet.update((w: any) => {
             if (isSender) {
-              w.balance = w.balance + oldAbs - newAbs; // Ήταν αποστολέας: επιστροφή, ξανααφαίρεση
+              w.balance = w.balance + oldAbs - newAbs;
             } else {
-              w.balance = w.balance - oldAbs + newAbs; // Ήταν παραλήπτης: αφαίρεση, ξαναπροσθήκη
+              w.balance = w.balance - oldAbs + newAbs;
             }
           });
 
-          // 3. Ενημερώνουμε την τρέχουσα συναλλαγή
           await transaction.update((t: any) => {
             t.amount = isSender ? -newAbs : newAbs;
             t.description = description.trim();
             t.date = newTime;
           });
 
-          // 4. Αν βρέθηκε η δίδυμη συναλλαγή, την ενημερώνουμε στον ίδιο χρόνο
           if (siblingTx.length > 0) {
             const sib = siblingTx[0];
             const sibWallet = (await database.get('wallets').find(sib.walletId)) as WalletModel;
@@ -160,7 +209,7 @@ export default function EditTransactionScreen() {
             await sib.update((t: any) => {
               t.amount = isSibSender ? -newAbs : newAbs;
               t.description = description.trim();
-              t.date = newTime; // Παίρνει και αυτό τη νέα ημερομηνία συγχρονισμένα
+              t.date = newTime;
             });
           }
         }
@@ -180,21 +229,15 @@ export default function EditTransactionScreen() {
         const oldAbs = Math.abs(transaction.amount);
         const originalTime = transaction.date.getTime();
 
-        // 🟢 Διαγραφή Εσόδου -> Αφαιρούμε τα λεφτά από το πορτοφόλι
         if (transaction.type === 'income') {
           await wallet.update((w: any) => { w.balance -= oldAbs; });
         } 
-        
-        // 🔴 Διαγραφή Εξόδου -> Επιστρέφουμε τα λεφτά πίσω στο πορτοφόλι
         else if (transaction.type === 'expense') {
           await wallet.update((w: any) => { w.balance += oldAbs; });
         } 
-        
-        // 🔵 Διαγραφή Μεταφοράς -> Αντιστρέφουμε πλήρως και τα δύο πορτοφόλια
         else if (transaction.type === 'transfer') {
           const isSender = transaction.amount < 0;
 
-          // Βρίσκουμε το sibling με το σωστό originalTime ΠΡΙΝ σβηστεί οτιδήποτε
           const siblingTx = (await database.get('transactions')
             .query(
               Q.where('date', originalTime),
@@ -218,7 +261,6 @@ export default function EditTransactionScreen() {
           }
         }
 
-        // Μόνιμη διαγραφή του αρχικού entry
         await transaction.destroyPermanently();
       });
 
@@ -267,6 +309,17 @@ export default function EditTransactionScreen() {
           t={t}
         />
 
+        {/* 🛠️ ΚΛΗΣΗ ΤΟΥ ΝΕΟΥ COMPONENT ΜΟΝΟ ΓΙΑ EXPENSE */}
+        {transaction.type === 'expense' && (
+          <ActiveTripCheckboxes 
+            activeTrips={activeTrips}
+            selectedTripId={selectedTripId}
+            onSelectTrip={handleSelectTrip}
+            isDark={isDark}
+            t={t}
+          />
+        )}
+
         <Button 
           mode="contained" 
           onPress={handleUpdate}
@@ -280,7 +333,6 @@ export default function EditTransactionScreen() {
 
       </ScrollView>
 
-      {/* DELETE CONFIRMATION DIALOG */}
       <Portal>
         <Dialog visible={isDeleteDialogVisible} onDismiss={() => setIsDeleteDialogVisible(false)} style={{ backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF' }}>
           <Dialog.Title style={{ color: isDark ? '#FFFFFF' : '#111827' }}>
@@ -322,6 +374,6 @@ export default function EditTransactionScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   scrollContent: { paddingHorizontal: 20, paddingBottom: 40 },
-  saveButton: { borderRadius: 14, marginTop: 8 },
+  saveButton: { borderRadius: 14, marginTop: 12 },
   saveButtonContent: { height: 50 }
 });
