@@ -147,6 +147,18 @@
     "emptyExpenses": "No expenses recorded for this trip yet.",
     "activeDuringExpense": "Active Adventures"
   },
+  "modes": {
+    "headerTitle": "More Modes",
+    "subtitle": "Power up your financials with customized calculators and tracking systems.",
+    "ownTitle": "Owes & Debts",
+    "ownDesc": "Track what you owe and what others owe you",
+    "fuelTitle": "Fuel Calculator",
+    "fuelDesc": "Calculate consumption and trip costs",
+    "subTitle": "Subscription Manager",
+    "subDesc": "Track active recurring billings",
+    "statsTitle": "Category statistics",
+    "statsDesc": "Granular expense breakdown of a thing"
+  },
   "own": {
     "addDebt": "New Debt Record",
     "personName": "Person's Name",
@@ -164,17 +176,16 @@
     "deleteTitle": "Delete Record",
     "deleteConfirm": "Are you sure you want to delete this debt entry?"
   },
-  "modes": {
-    "headerTitle": "More Modes",
-    "subtitle": "Power up your financials with customized calculators and tracking systems.",
-    "ownTitle": "Owes & Debts",
-    "ownDesc": "Track what you owe and what others owe you",
-    "fuelTitle": "Fuel Calculator",
-    "fuelDesc": "Calculate consumption and trip costs",
-    "subTitle": "Subscription Manager",
-    "subDesc": "Track active recurring billings",
-    "statsTitle": "Category statistics",
-    "statsDesc": "Granular expense breakdown of a thing"
+  "fuel": {
+    "tripDetails": "Trip Details",
+    "distance": "Distance to Travel",
+    "avgConsumption": "Average Fuel Consumption",
+    "pricePerLiter": "Fuel Price (per Liter)",
+    "passengers": "Number of Passengers",
+    "calculationResults": "Estimation Results",
+    "fuelNeeded": "Required Fuel",
+    "totalTripCost": "Total Fuel Cost",
+    "costPerPerson": "Cost per Person"
   },
   "settings": {
     "language": "Language",
