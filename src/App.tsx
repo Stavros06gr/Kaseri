@@ -11,7 +11,6 @@ import { useAppStore } from './store/useAppStore';
 
 const WatermelonProvider = DatabaseProvider as any;
 
-// Μοντέρνο Flat Light Theme για το Navigation
 const customLightTheme = {
   ...DefaultTheme,
   colors: {
@@ -22,7 +21,6 @@ const customLightTheme = {
   },
 };
 
-// Μοντέρνο Flat Dark Theme για το Navigation
 const customDarkTheme = {
   ...DarkTheme,
   colors: {
@@ -37,17 +35,16 @@ export default function App() {
   const { theme, language } = useAppStore();
   const isDark = theme === 'dark';
 
-  // Συγχρονισμός της γλώσσας του i18next με το Zustand store κατά την εκκίνηση
+  // 🔄 Συγχρονισμός της γλώσσας του i18next με το Zustand store κατά την εκκίνηση
   useEffect(() => {
-    // Μετατρέπουμε το 'gr' του store στο 'el' που έχεις ορίσει στο i18n config
-    const i18nCode = language === 'gr' ? 'el' : 'en';
+    // 🛠️ ΔΙΟΡΘΩΣΗ: Αν η γλώσσα είναι 'gr' γίνεται 'el', αλλιώς κρατάμε τη γλώσσα ως έχει (en, de, es, pt)
+    const i18nCode = language === 'gr' ? 'el' : language;
     
     if (i18n.language !== i18nCode) {
       i18n.changeLanguage(i18nCode);
     }
   }, [language]);
 
-  // Επιλογή των κατάλληλων themes βάσει του Zustand state
   const activeNavTheme = isDark ? customDarkTheme : customLightTheme;
   const activePaperTheme = isDark ? MD3DarkTheme : MD3LightTheme;
 
@@ -57,7 +54,6 @@ export default function App() {
         <NavigationContainer theme={activeNavTheme}>
           <View style={[styles.container, { backgroundColor: activeNavTheme.colors.background }]}>
             <RootNavigator />
-            {/* Η μπάρα ώρας/μπαταρίας του κινητού αλλάζει πλέον σωστά χρώμα */}
             <StatusBar style={isDark ? 'light' : 'dark'} />
           </View>
         </NavigationContainer>

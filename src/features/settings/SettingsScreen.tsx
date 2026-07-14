@@ -10,9 +10,9 @@ import {
 import { useAppStore } from '../../store/useAppStore';
 import SettingOptionRow from './components/SettingOptionRow';
 import BackupControls from './components/BackupControls';
+import esJSON from '../../i18n/locales/es.json';
 
-// 🛠️ 1. ΛΙΣΤΑ ΥΠΟΣΤΗΡΙΖΟΜΕΝΩΝ ΓΛΩΣΣΩΝ (Με τις νέες προσθήκες)
-// 🛠️ Προσθήκη του "as const" στο τέλος για να κλειδώσουν οι τύποι
+// 🛠️ 1. ΛΙΣΤΑ ΥΠΟΣΤΗΡΙΖΟΜΕΝΩΝ ΓΛΩΣΣΩΝ (Με "as const" για κλείδωμα των τύπων)
 const LANGUAGES = [
   { code: 'en', label: 'English', i18nCode: 'en' },
   { code: 'gr', label: 'Ελληνικά', i18nCode: 'el' },
@@ -21,7 +21,6 @@ const LANGUAGES = [
   { code: 'pt', label: 'Português', i18nCode: 'pt' },
 ] as const;
 
-// 🛠️ 2. ΔΙΕΥΡΥΜΕΝΗ ΛΙΣΤΑ ΝΟΜΙΣΜΑΤΩΝ
 const CURRENCIES = ['€', '$', '£', '¥', 'CHF', 'R$'];
 
 export default function SettingsScreen() {
@@ -44,17 +43,17 @@ export default function SettingsScreen() {
   const [langModalVisible, setLangModalVisible] = useState(false);
   const [currencyModalVisible, setCurrencyModalVisible] = useState(false);
 
-  // 🛠️ 3. ΕΞΥΠΝΟΣ ΧΕΙΡΙΣΜΟΣ ΓΛΩΣΣΑΣ
+  // 🛠️ 2. ΔΙΟΡΘΩΣΗ: Δέχεται string και κάνει type-safe mapping στο setLanguage
   const handleLanguageSelect = (code: string) => {
     const selected = LANGUAGES.find(l => l.code === code);
+    
     if (selected) {
-      i18n.changeLanguage(selected.i18nCode);
-      setLanguage(code as any);
+      setLanguage(selected.code); // 👈 Περνάει πλέον εγγυημένα ως AppLanguage
     }
+    
     setLangModalVisible(false);
   };
 
-  // 🛠️ 4. ΕΞΥΠΝΟΣ ΧΕΙΡΙΣΜΟΣ ΝΟΜΙΣΜΑΤΟΣ
   const handleCurrencySelect = (val: string) => {
     setCurrency(val);
     setCurrencyModalVisible(false);
@@ -106,7 +105,7 @@ export default function SettingsScreen() {
             icon={<Languages size={20} color="#6B7280" />}
             title={t('settings.language', 'Language')}
             value={getLanguageLabel()}
-            onPress={() => setLangModalVisible(true)} // 👈 Άνοιγμα Modal
+            onPress={() => setLangModalVisible(true)}
             isDark={isDark}
           />
           <View style={[styles.innerDivider, dynamicStyles.divider]} />
@@ -114,7 +113,7 @@ export default function SettingsScreen() {
             icon={<Coins size={20} color="#6B7280" />}
             title={t('settings.currency', 'Currency')}
             value={currency}
-            onPress={() => setCurrencyModalVisible(true)} // 👈 Άνοιγμα Modal
+            onPress={() => setCurrencyModalVisible(true)}
             isDark={isDark}
           />
           <View style={[styles.innerDivider, dynamicStyles.divider]} />
@@ -194,9 +193,8 @@ export default function SettingsScreen() {
         </Surface>
       </ScrollView>
 
-      {/* 🛠️ 5. PORTAL DIALOGS ΓΙΑ ΜΗΔΕΝΙΚΟ CLIPPING */}
+      {/* PORTAL DIALOGS */}
       <Portal>
-        {/* LANGUAGE DIALOG */}
         <Dialog 
           visible={langModalVisible} 
           onDismiss={() => setLangModalVisible(false)}
@@ -224,7 +222,6 @@ export default function SettingsScreen() {
           </Dialog.Actions>
         </Dialog>
 
-        {/* CURRENCY DIALOG */}
         <Dialog 
           visible={currencyModalVisible} 
           onDismiss={() => setCurrencyModalVisible(false)}
@@ -257,72 +254,17 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
-  },
-  screenTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    marginBottom: 24,
-    letterSpacing: -0.5,
-  },
-  sectionLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 8,
-    marginLeft: 4,
-  },
-  groupCard: {
-    borderRadius: 20,
-    padding: 12,
-    marginBottom: 24,
-  },
-  innerDivider: {
-    height: 1,
-    marginHorizontal: 4,
-  },
-  apiInputContainer: {
-    paddingVertical: 12,
-    paddingHorizontal: 4,
-  },
-  apiHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  apiTitle: {
-    fontSize: 15,
-    fontWeight: '500',
-  },
-  input: {
-    height: 44,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  backupHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 4,
-    paddingTop: 4,
-    marginBottom: 10,
-  },
-  // Radio Styles
-  radioRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  radioLabel: {
-    fontSize: 15,
-    fontWeight: '600',
-    marginLeft: 12,
-  },
+  container: { flex: 1 },
+  scrollContent: { paddingHorizontal: 20, paddingBottom: 40 },
+  screenTitle: { fontSize: 28, fontWeight: '700', marginBottom: 24, letterSpacing: -0.5 },
+  sectionLabel: { fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, marginLeft: 4 },
+  groupCard: { borderRadius: 20, padding: 12, marginBottom: 24 },
+  innerDivider: { height: 1, marginHorizontal: 4 },
+  apiInputContainer: { paddingVertical: 12, paddingHorizontal: 4 },
+  apiHeaderRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
+  apiTitle: { fontSize: 15, fontWeight: '500' },
+  input: { height: 44, borderRadius: 12, paddingHorizontal: 14, fontSize: 14, fontWeight: '500' },
+  backupHeaderRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 4, paddingTop: 4, marginBottom: 10 },
+  radioRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8 },
+  radioLabel: { fontSize: 15, fontWeight: '600', marginLeft: 12 },
 });

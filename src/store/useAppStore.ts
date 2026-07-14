@@ -1,7 +1,10 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import i18n from 'i18next'; // 👈 Εισαγωγή του i18next για τον συγχρονισμό
+import i18n from 'i18next'; // Εισαγωγή του i18next για τον συγχρονισμό
 import { zustandStorage } from './mmkv';
+
+// 🛠️ Ορισμός των υποστηριζόμενων γλωσσών ως Type
+export type AppLanguage = 'en' | 'gr' | 'de' | 'es' | 'pt';
 
 // Ορισμός του Interface για πλήρη υποστήριξη TypeScript
 interface AppState {
@@ -9,8 +12,8 @@ interface AppState {
   setTheme: (theme: 'light' | 'dark') => void;
   currency: string;
   setCurrency: (currency: string) => void;
-  language: 'en' | 'gr';
-  setLanguage: (language: 'en' | 'gr') => Promise<void>; // 👈 Μετατράπηκε σε Promise/Async για ασφάλεια
+  language: AppLanguage; 
+  setLanguage: (language: AppLanguage) => Promise<void>; 
   hideBalance: boolean;
   toggleHideBalance: () => void;
   
@@ -21,7 +24,7 @@ interface AppState {
   toggleBiometrics: () => void;
 }
 
-// 🔒 Static lock για να αγνοούνται ακαριαία τα spams/διπλά κλικ πριν ξεκινήσει το re-render
+// 🔒 Static lock για να αποφεύγονται race conditions
 let isLangLockActive = false;
 
 export const useAppStore = create<AppState>()(
@@ -30,7 +33,7 @@ export const useAppStore = create<AppState>()(
       // Αρχικές τιμές (Defaults)
       theme: 'light',
       currency: '€',
-      language: 'en', // 👈 Αλλαγή σε English ως default γλώσσα της εφαρμογής
+      language: 'en', 
       hideBalance: false,
       trading212Key: '',
       biometricsEnabled: false,
@@ -39,21 +42,21 @@ export const useAppStore = create<AppState>()(
       setTheme: (theme) => set({ theme }),
       setCurrency: (currency) => set({ currency }),
       
-      // Ασφαλές Ασύγχρονο Set Language με προστασία από Race Conditions
+      // Ασφαλές Ασύγχρονο Set Language
       setLanguage: async (language) => {
-        if (isLangLockActive) return; // Αν εκτελείται ήδη αλλαγή, μπλόκαρε το επόμενο κλικ
+        if (isLangLockActive) return; 
         
         isLangLockActive = true;
         try {
-          // 1. Περιμένουμε το i18next να αλλάξει επιτυχώς τα εσωτερικά localization αρχεία
-          await i18n.changeLanguage(language);
+          // Αντιστοίχιση: Το 'gr' γίνεται 'el' στο i18n, τα υπόλοιπα περνάνε κανονικά
+          const i18nCode = language === 'gr' ? 'el' : language;
           
-          // 2. Μόνο αφού ολοκληρωθεί η ασύγχρονη αλλαγή, ενημερώνουμε το state και το MMKV
+          await i18n.changeLanguage(i18nCode);
           set({ language });
         } catch (error) {
           console.error('Failed to change language:', error);
         } finally {
-          isLangLockActive = false; // Ξεκλείδωμα
+          isLangLockActive = false; 
         }
       },
 
@@ -62,8 +65,8 @@ export const useAppStore = create<AppState>()(
       toggleBiometrics: () => set((state) => ({ biometricsEnabled: !state.biometricsEnabled })),
     }),
     {
-      name: 'kaseri-app-storage', // Μοναδικό όνομα για το MMKV storage key
-      storage: createJSONStorage(() => zustandStorage), // Σύνδεση με το MMKV adapter μας
+      name: 'kaseri-app-storage', 
+      storage: createJSONStorage(() => zustandStorage), 
     }
   )
 );
