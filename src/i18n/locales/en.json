@@ -95,7 +95,7 @@
   },
   "goals": {
     "title": "Savings Goals",
-    "newBtn": "New Goal",
+    "newBtn": "New",
     "until": "Target:",
     "missing": "Remaining:",
     "withdraw": "Withdraw",
