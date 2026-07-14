@@ -233,5 +233,13 @@
     "theme": "Theme",
     "trading212": "Trading212 API Key",
     "fingerprint": "Fingerprint Authentication"
+  },
+  "analysis": {
+    "title": "30-Day Analysis",
+    "subtitle": "Income vs Expenses",
+    "saved": "Saved",
+    "deficit": "Overspent",
+    "netSavings": "Net Savings",
+    "deficitAmount": "Deficit"
   }
 }
