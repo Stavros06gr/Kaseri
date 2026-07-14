@@ -200,6 +200,21 @@
     "costPerKm": "Cost per Kilometer",
     "costPer100Km": "Cost per 100km"
   },
+  "subs": {
+    "monthlyCost": "Estimated Monthly Spending",
+    "emptyState": "No subscriptions active. Click \"+\" to add one!",
+    "every": "every",
+    "dueToday": "Due today / overdue",
+    "dueIn": "Due in",
+    "addNew": "New Subscription",
+    "nameLabel": "Service Name (e.g. Netflix)",
+    "cycleDays": "Billing Cycle (Days)",
+    "nextBilling": "Next Payment Date",
+    "nameRequired": "Please enter a subscription name",
+    "invalidCycle": "Please enter a valid number of days",
+    "deleteTitle": "Delete Subscription",
+    "deleteConfirm": "Are you sure you want to cancel tracking this subscription?"
+  },
   "settings": {
     "language": "Language",
     "currency": "Currency",
