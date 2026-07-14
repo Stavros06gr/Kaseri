@@ -15,7 +15,7 @@ export default function SettingsScreen() {
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
 
-  // Zustand Global State[cite: 1]
+  // Zustand Global State
   const { 
     theme, setTheme, 
     currency, setCurrency, 
@@ -43,7 +43,10 @@ export default function SettingsScreen() {
 
   const saveApiKey = () => {
     setTrading212Key(apiKeyInput);
-    Alert.alert('Success', 'Trading212 API Key updated.');
+    Alert.alert(
+      t('settings.apiKeySuccessTitle', 'Success'), 
+      t('settings.apiKeySuccessMsg', 'Trading212 API Key updated.')
+    );
   };
 
   const dynamicStyles = {
@@ -64,14 +67,18 @@ export default function SettingsScreen() {
       contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 16 }]}
     >
       {/* SCREEN TITLE */}
-      <Text style={[styles.screenTitle, dynamicStyles.textMain]}>{t('navigation.settings')}</Text>
+      <Text style={[styles.screenTitle, dynamicStyles.textMain]}>
+        {t('navigation.settings', 'Settings')}
+      </Text>
 
       {/* SECTION 1: PREFERENCES */}
-      <Text style={[styles.sectionLabel, dynamicStyles.textMuted]}>Preferences</Text>
+      <Text style={[styles.sectionLabel, dynamicStyles.textMuted]}>
+        {t('settings.preferences', 'Preferences')}
+      </Text>
       <Surface style={[styles.groupCard, dynamicStyles.card]} mode="flat">
         <SettingOptionRow
           icon={<Languages size={20} color="#6B7280" />}
-          title={t('settings.language')}
+          title={t('settings.language', 'Language')}
           value={language === 'gr' ? 'Ελληνικά' : 'English'}
           onPress={handleLanguageChange}
           isDark={isDark}
@@ -79,7 +86,7 @@ export default function SettingsScreen() {
         <View style={[styles.innerDivider, dynamicStyles.divider]} />
         <SettingOptionRow
           icon={<Coins size={20} color="#6B7280" />}
-          title={t('settings.currency')}
+          title={t('settings.currency', 'Currency')}
           value={currency}
           onPress={handleCurrencyChange}
           isDark={isDark}
@@ -87,7 +94,7 @@ export default function SettingsScreen() {
         <View style={[styles.innerDivider, dynamicStyles.divider]} />
         <SettingOptionRow
           icon={<Moon size={20} color="#6B7280" />}
-          title={t('settings.theme')}
+          title={t('settings.theme', 'Theme')}
           rightElement={
             <Switch 
               value={isDark} 
@@ -99,11 +106,13 @@ export default function SettingsScreen() {
       </Surface>
 
       {/* SECTION 2: SECURITY & API */}
-      <Text style={[styles.sectionLabel, dynamicStyles.textMuted]}>Security & Integrations</Text>
+      <Text style={[styles.sectionLabel, dynamicStyles.textMuted]}>
+        {t('settings.securityAndIntegrations', 'Security & Integrations')}
+      </Text>
       <Surface style={[styles.groupCard, dynamicStyles.card]} mode="flat">
         <SettingOptionRow
           icon={<Fingerprint size={20} color="#6B7280" />}
-          title={t('settings.fingerprint')}
+          title={t('settings.fingerprint', 'Fingerprint Authentication')}
           rightElement={
             <Switch 
               value={biometricsEnabled} 
@@ -117,13 +126,15 @@ export default function SettingsScreen() {
         <View style={styles.apiInputContainer}>
           <View style={styles.apiHeaderRow}>
             <KeyRound size={20} color="#6B7280" style={{ marginRight: 14 }} />
-            <Text style={[styles.apiTitle, dynamicStyles.textMain]}>{t('settings.trading212')}</Text>
+            <Text style={[styles.apiTitle, dynamicStyles.textMain]}>
+              {t('settings.trading212', 'Trading212 API Key')}
+            </Text>
           </View>
           <TextInput
             style={[styles.input, dynamicStyles.input]}
             value={apiKeyInput}
             onChangeText={setApiKeyInput}
-            placeholder="Paste your API key here"
+            placeholder={t('settings.apiKeyPlaceholder', 'Paste your API key here')}
             placeholderTextColor="#9CA3AF"
             secureTextEntry
             returnKeyType="done"
@@ -133,15 +144,25 @@ export default function SettingsScreen() {
       </Surface>
 
       {/* SECTION 3: DATA MANAGEMENT */}
-      <Text style={[styles.sectionLabel, dynamicStyles.textMuted]}>Data Management</Text>
+      <Text style={[styles.sectionLabel, dynamicStyles.textMuted]}>
+        {t('settings.dataManagement', 'Data Management')}
+      </Text>
       <Surface style={[styles.groupCard, dynamicStyles.card]} mode="flat">
         <View style={styles.backupHeaderRow}>
           <Database size={20} color="#6B7280" style={{ marginRight: 14 }} />
-          <Text style={[styles.apiTitle, dynamicStyles.textMain]}>Local Backup & Restore</Text>
+          <Text style={[styles.apiTitle, dynamicStyles.textMain]}>
+            {t('settings.backupAndRestore', 'Local Backup & Restore')}
+          </Text>
         </View>
         <BackupControls
-          onBackup={() => Alert.alert('Backup', 'Local backup created successfully.')}
-          onRestore={() => Alert.alert('Restore', 'Data restored successfully.')}
+          onBackup={() => Alert.alert(
+            t('settings.backupTitle', 'Backup'), 
+            t('settings.backupSuccess', 'Local backup created successfully.')
+          )}
+          onRestore={() => Alert.alert(
+            t('settings.restoreTitle', 'Restore'), 
+            t('settings.restoreSuccess', 'Data restored successfully.')
+          )}
           isDark={isDark}
         />
       </Surface>

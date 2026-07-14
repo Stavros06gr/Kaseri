@@ -73,7 +73,9 @@
     "sameWalletError": "Source and destination wallets cannot be the same",
     "transfer": "Transfer",
     "transferTo": "Transfer to",
-    "transferFrom": "Transfer from"
+    "transferFrom": "Transfer from",
+    "deleteTxTitle": "Delete Transaction",
+    "deleteTxConfirm": "Are you sure you want to delete this log? Wallet balances will be adjusted automatically."
   },
   "history": {
     "title": "Activity History",
@@ -232,7 +234,18 @@
     "currency": "Currency",
     "theme": "Theme",
     "trading212": "Trading212 API Key",
-    "fingerprint": "Fingerprint Authentication"
+    "fingerprint": "Fingerprint Authentication",
+    "preferences": "Preferences",
+    "securityAndIntegrations": "Security & Integrations",
+    "apiKeyPlaceholder": "Paste your API key here",
+    "apiKeySuccessTitle": "Success",
+    "apiKeySuccessMsg": "Trading212 API Key updated.",
+    "dataManagement": "Data Management",
+    "backupAndRestore": "Local Backup & Restore",
+    "backupTitle": "Backup",
+    "backupSuccess": "Local backup created successfully.",
+    "restoreTitle": "Restore",
+    "restoreSuccess": "Data restored successfully."
   },
   "analysis": {
     "title": "30-Day Analysis",
