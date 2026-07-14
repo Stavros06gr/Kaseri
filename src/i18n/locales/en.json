@@ -154,6 +154,8 @@
     "ownDesc": "Track what you owe and what others owe you",
     "fuelTitle": "Fuel Calculator",
     "fuelDesc": "Calculate consumption and trip costs",
+    "fuelConsumptionTitle": "Fuel Consumption",
+    "fuelConsumptionDesc": "Find your real average consumption (L/100km)",
     "subTitle": "Subscription Manager",
     "subDesc": "Track active recurring billings",
     "statsTitle": "Category statistics",
@@ -186,6 +188,17 @@
     "fuelNeeded": "Required Fuel",
     "totalTripCost": "Total Fuel Cost",
     "costPerPerson": "Cost per Person"
+  },
+  "consumption": {
+    "title": "Fuel Consumption",
+    "details": "Refuel Details",
+    "liters": "Liters refueled",
+    "kilometers": "Kilometers driven",
+    "pricePerLiter": "Fuel Price (Optional)",
+    "results": "Real Efficiency",
+    "avgConsumption": "Real Consumption",
+    "costPerKm": "Cost per Kilometer",
+    "costPer100Km": "Cost per 100km"
   },
   "settings": {
     "language": "Language",

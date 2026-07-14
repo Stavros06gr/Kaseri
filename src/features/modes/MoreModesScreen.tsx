@@ -11,7 +11,8 @@ import {
   RefreshCw, 
   PieChart, 
   ChevronRight, 
-  Layers 
+  Layers,
+  Flame
 } from 'lucide-react-native';
 
 import { useAppStore } from '../../store/useAppStore';
@@ -50,6 +51,15 @@ export default function MoreModesScreen() {
       icon: Fuel,
       iconColor: '#EF4444', // Red / Orange
       bgColor: 'rgba(239, 68, 68, 0.08)',
+    },
+    {
+      id: 'fuel_consumption',
+      title: t('modes.fuelConsumptionTitle', 'Fuel Consumption'),
+      description: t('modes.fuelConsumptionDesc', 'Find your real average consumption (L/100km)'),
+      route: 'FuelConsumption' as const,
+      icon: Flame, // Εισαγωγή του Flame από το lucide-react-native αν δεν υπάρχει
+      iconColor: '#F59E0B', // Amber / Orange
+      bgColor: 'rgba(245, 158, 11, 0.08)',
     },
     {
       id: 'subscriptions',

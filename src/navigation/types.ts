@@ -38,6 +38,7 @@ export type RootStackParamList = {
   // Επιπλέον Modes
   Own: undefined;
   FuelCalculator: undefined;
+  FuelConsumption: undefined;
   SubscriptionManager: undefined;
   CategoryStatistics: undefined;
 };
