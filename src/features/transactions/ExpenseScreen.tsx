@@ -16,12 +16,10 @@ import WalletModel from '../../database/models/Wallet';
 import TransactionModel from '../../database/models/Transaction';
 import TripModel from '../../database/models/Trip';
 
-// Imports των νέων Expense Components
 import ExpenseHeader from './components/ExpenseHeader';
 import ExpenseAmountCard from './components/ExpenseAmountCard';
 import ExpenseDetailsCard from './components/ExpenseDetailsCard';
 import ExpenseWalletDialog from './components/ExpenseWalletDialog';
-/* 🛠️ Η ΝΕΑ ΚΑΘΑΡΗ ΕΙΣΑΓΩΓΗ */
 import ActiveTripCheckboxes from './components/ActiveTripCheckboxes'; 
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'MainTabs'>;
@@ -44,10 +42,10 @@ export default function ExpenseScreen() {
   const [selectedWalletName, setSelectedWalletName] = useState('');
   const [date, setDate] = useState(new Date());
 
-  // Trip States
+  // Trip States (🛠️ Updated to Array)
   const [allTrips, setAllTrips] = useState<TripModel[]>([]);
   const [activeTrips, setActiveTrips] = useState<TripModel[]>([]);
-  const [selectedTripId, setSelectedTripId] = useState<string>('');
+  const [selectedTripIds, setSelectedTripIds] = useState<string[]>([]);
 
   // UI Visibility States
   const [wallets, setWallets] = useState<WalletModel[]>([]);
@@ -64,7 +62,7 @@ export default function ExpenseScreen() {
   useEffect(() => {
     if (allTrips.length === 0) {
       setActiveTrips([]);
-      setSelectedTripId('');
+      setSelectedTripIds([]);
       return;
     }
 
@@ -78,13 +76,11 @@ export default function ExpenseScreen() {
 
     setActiveTrips(filtered);
 
+    // Default: Επιλέγονται αυτόματα όλα τα ενεργά ταξίδια της συγκεκριμένης ημερομηνίας
     if (filtered.length > 0) {
-      const isStillActive = filtered.some(t => t.id === selectedTripId);
-      if (!isStillActive) {
-        setSelectedTripId(filtered[0].id);
-      }
+      setSelectedTripIds(filtered.map(t => t.id));
     } else {
-      setSelectedTripId('');
+      setSelectedTripIds([]);
     }
   }, [date, allTrips]);
 
@@ -124,12 +120,11 @@ export default function ExpenseScreen() {
     }
   };
 
+  // 🛠️ Multi-select toggle logic
   const handleSelectTrip = (id: string) => {
-    if (selectedTripId === id) {
-      setSelectedTripId('');
-    } else {
-      setSelectedTripId(id);
-    }
+    setSelectedTripIds(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
   };
 
   const handleSaveExpense = async () => {
@@ -153,9 +148,8 @@ export default function ExpenseScreen() {
           tx.description = description.trim();
           tx.date = date.getTime();
           
-          if (selectedTripId) {
-            tx.tripId = selectedTripId;
-          }
+          // 🛠️ Σώζουμε τη λίστα των Trips ως JSON String
+          tx.tripId = selectedTripIds.length > 0 ? JSON.stringify(selectedTripIds) : null;
         });
 
         const wallet = (await database.get('wallets').find(selectedWalletId)) as WalletModel;
@@ -204,10 +198,9 @@ export default function ExpenseScreen() {
           t={t}
         />
 
-        {/* 🛠️ ΚΛΗΣΗ ΤΟΥ ΝΕΟΥ COMPONENT */}
         <ActiveTripCheckboxes 
           activeTrips={activeTrips}
-          selectedTripId={selectedTripId}
+          selectedTripIds={selectedTripIds} // 🛠️ Πέρασμα του Array
           onSelectTrip={handleSelectTrip}
           isDark={isDark}
           t={t}

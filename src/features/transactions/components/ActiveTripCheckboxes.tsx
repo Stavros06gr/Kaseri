@@ -6,7 +6,7 @@ import TripModel from '../../../database/models/Trip';
 
 interface Props {
   activeTrips: TripModel[];
-  selectedTripId: string;
+  selectedTripIds: string[]; // 🛠️ Αλλαγή σε πίνακα από strings
   onSelectTrip: (id: string) => void;
   isDark: boolean;
   t: (key: string, defaultText: string) => string;
@@ -14,7 +14,7 @@ interface Props {
 
 export default function ActiveTripCheckboxes({
   activeTrips,
-  selectedTripId,
+  selectedTripIds,
   onSelectTrip,
   isDark,
   t
@@ -31,7 +31,8 @@ export default function ActiveTripCheckboxes({
         {t('trips.activeDuringExpense', 'Active Adventures')}
       </Text>
       {activeTrips.map((trip) => {
-        const isSelected = selectedTripId === trip.id;
+        // 🛠️ Έλεγχος αν το συγκεκριμένο trip περιλαμβάνεται στα επιλεγμένα
+        const isSelected = selectedTripIds.includes(trip.id);
         return (
           <TouchableOpacity
             key={trip.id}
@@ -67,19 +68,7 @@ export default function ActiveTripCheckboxes({
 const styles = StyleSheet.create({
   activeTripsContainer: { marginTop: 16, marginBottom: 8 },
   activeTripsTitle: { fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 },
-  tripSelectorRow: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'space-between', 
-    padding: 14, 
-    borderRadius: 16, 
-    marginBottom: 8, 
-    elevation: 1, 
-    shadowColor: '#000', 
-    shadowOffset: { width: 0, height: 1 }, 
-    shadowOpacity: 0.05, 
-    shadowRadius: 2 
-  },
+  tripSelectorRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 14, borderRadius: 16, marginBottom: 8, elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 },
   tripSelectorLeft: { flexDirection: 'row', alignItems: 'center' },
   tripDestinationText: { fontSize: 14, marginLeft: 2 }
 });

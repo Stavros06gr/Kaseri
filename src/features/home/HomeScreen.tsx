@@ -88,7 +88,11 @@ export default function HomeScreen() {
       
       const currentTripsWithExpenses = await Promise.all(
         currentTrips.map(async (trip) => {
-          const txs = await trip.transactions.fetch();
+          const txs = await database.get('transactions').query(
+            Q.where('type', 'expense'),
+            Q.where('trip_id', Q.like(`%${trip.id}%`))
+          ).fetch();
+
           const totalExpenses = txs.reduce((sum: number, tx: any) => sum + (tx.amount || 0), 0);
           
           Object.defineProperty(trip, 'totalExpenses', {

@@ -20,7 +20,6 @@ import TripModel from '../../database/models/Trip';
 import EditTransactionHeader from './components/EditTransactionHeader';
 import EditAmountCard from './components/EditAmountCard';
 import EditDetailsCard from './components/EditDetailsCard';
-/* 🛠️ Η ΝΕΑ ΚΑΘΑΡΗ ΕΙΣΑΓΩΓΗ */
 import ActiveTripCheckboxes from './components/ActiveTripCheckboxes';
 
 type EditTxRouteProp = RouteProp<RootStackParamList, 'EditTransaction'>;
@@ -47,10 +46,10 @@ export default function EditTransactionScreen() {
   const [description, setDescription] = useState('');
   const [date, setDate] = useState(new Date());
   
-  // Trip States
+  // Trip States (🛠️ Updated to Array)
   const [allTrips, setAllTrips] = useState<TripModel[]>([]);
   const [activeTrips, setActiveTrips] = useState<TripModel[]>([]);
-  const [selectedTripId, setSelectedTripId] = useState<string>('');
+  const [selectedTripIds, setSelectedTripIds] = useState<string[]>([]);
   const [hasInitializedTrip, setHasInitializedTrip] = useState(false);
 
   // UI States
@@ -75,21 +74,26 @@ export default function EditTransactionScreen() {
 
     setActiveTrips(filtered);
 
+    // 🛠️ Έξυπνη Αρχικοποίηση κατά το Edit με Safe Parse
     if (!hasInitializedTrip && transaction) {
+      let parsedIds: string[] = [];
       if (transaction.tripId) {
-        setSelectedTripId(transaction.tripId);
-      } else if (filtered.length > 0) {
-        setSelectedTripId(filtered[0].id);
+        try {
+          const parsed = JSON.parse(transaction.tripId);
+          parsedIds = Array.isArray(parsed) ? parsed : [transaction.tripId];
+        } catch {
+          // Backward compatibility: Αν ήταν legacy string αντί για array JSON
+          parsedIds = [transaction.tripId];
+        }
       }
+      setSelectedTripIds(parsedIds);
       setHasInitializedTrip(true);
     } else {
+      // Αν αλλάξει η ημερομηνία κατά το editing, προτείνει τα νέα ενεργά ταξίδια
       if (filtered.length > 0) {
-        const isStillActive = filtered.some(t => t.id === selectedTripId);
-        if (!isStillActive) {
-          setSelectedTripId(filtered[0].id);
-        }
+        setSelectedTripIds(filtered.map(t => t.id));
       } else {
-        setSelectedTripId('');
+        setSelectedTripIds([]);
       }
     }
   }, [date, allTrips, transaction]);
@@ -122,12 +126,11 @@ export default function EditTransactionScreen() {
     }
   };
 
+  // 🛠️ Multi-select toggle logic
   const handleSelectTrip = (id: string) => {
-    if (selectedTripId === id) {
-      setSelectedTripId('');
-    } else {
-      setSelectedTripId(id);
-    }
+    setSelectedTripIds(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
   };
 
   const handleUpdate = async () => {
@@ -166,7 +169,8 @@ export default function EditTransactionScreen() {
             t.category = category.trim();
             t.description = description.trim();
             t.date = newTime;
-            t.tripId = selectedTripId || null;
+            // 🛠️ Αποθήκευση της λίστας ως JSON String
+            t.tripId = selectedTripIds.length > 0 ? JSON.stringify(selectedTripIds) : null;
           });
         } 
         else if (transaction.type === 'transfer') {
@@ -309,11 +313,11 @@ export default function EditTransactionScreen() {
           t={t}
         />
 
-        {/* 🛠️ ΚΛΗΣΗ ΤΟΥ ΝΕΟΥ COMPONENT ΜΟΝΟ ΓΙΑ EXPENSE */}
+        {/* 🛠️ Πέρασμα selectedTripIds & onSelectTrip */}
         {transaction.type === 'expense' && (
           <ActiveTripCheckboxes 
             activeTrips={activeTrips}
-            selectedTripId={selectedTripId}
+            selectedTripIds={selectedTripIds}
             onSelectTrip={handleSelectTrip}
             isDark={isDark}
             t={t}

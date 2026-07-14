@@ -4,19 +4,29 @@ import { field, date, relation } from '@nozbe/watermelondb/decorators';
 export default class Transaction extends Model {
   static table = 'transactions';
 
-  // Ορίζουμε ότι κάθε transaction ανήκει σε ένα συγκεκριμένο wallet
   static associations = {
     wallets: { type: 'belongs_to' as const, key: 'wallet_id' },
   };
 
-  @field('type') type!: 'income' | 'expense' | 'transfer'; // Περιορίζουμε τους τύπους βάσει του πλάνου σου
+  @field('type') type!: 'income' | 'expense' | 'transfer';
   @field('amount') amount!: number;
   @field('category') category!: string;
-  @date('date') date!: Date; // Η WatermelonDB το μετατρέπει αυτόματα από αριθμό σε Date object
+  @date('date') date!: Date;
   @field('description') description?: string;
   @field('wallet_id') walletId!: string;
-  @field('trip_id') tripId?: string;
+  @field('trip_id') tripId?: string; // 🛠️ Εδώ θα αποθηκεύεται το JSON stringified array
 
-  // Μας επιτρέπει να κάνουμε π.χ. transaction.wallet.fetch() για να πάρουμε τις πληροφορίες του πορτοφολιού
   @relation('wallets', 'wallet_id') wallet!: any;
+
+  // 🛠️ GETTER: Επιστρέφει πάντα string array, κάνοντας parse το JSON με ασφάλεια
+  get tripsIds(): string[] {
+    if (!this.tripId) return [];
+    try {
+      const parsed = JSON.parse(this.tripId);
+      return Array.isArray(parsed) ? parsed : [this.tripId];
+    } catch {
+      // Αν ήταν παλιό record με απλό string (π.χ. "trip_123"), το επιστρέφει ως array ενός στοιχείου
+      return [this.tripId];
+    }
+  }
 }

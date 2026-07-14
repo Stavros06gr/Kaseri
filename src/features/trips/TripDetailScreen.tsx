@@ -5,6 +5,9 @@ import { useTranslation } from 'react-i18next';
 import { useRoute, useNavigation, useIsFocused, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+/* 🛠️ Η ΝΕΑ ΕΙΣΑΓΩΓΗ ΤΟΥ Q */
+import { Q } from '@nozbe/watermelondb'; 
+import { el, enUS } from 'date-fns/locale';
 
 import { database } from '../../database';
 import { useAppStore } from '../../store/useAppStore';
@@ -53,15 +56,18 @@ export default function TripDetailScreen() {
       const targetTrip = (await database.get('trips').find(tripId)) as TripModel;
       setTrip(targetTrip);
 
-      // 2. Φόρτωση συνδεδεμένων συναλλαγών (transactions)
-      const fetchedTransactions = await targetTrip.transactions.fetch();
+      // 2. 🛠️ ΔΙΟΡΘΩΣΗ: Φόρτωση συνδεδεμένων συναλλαγών με Q.like αντί για targetTrip.transactions.fetch()[cite: 1]
+      const fetchedTransactions = await database.get('transactions').query(
+        Q.where('type', 'expense'),
+        Q.where('trip_id', Q.like(`%${tripId}%`))
+      ).fetch();
       
       // Ταξινόμηση συναλλαγών: Πιο πρόσφατες πρώτες
       const sortedExpenses = fetchedTransactions.sort((a: any, b: any) => {
         return new Date(b.date).getTime() - new Date(a.date).getTime();
       });
 
-      // Υπολογισμός συνολικού ποσού εξόδων
+      // Υπολογισμός συνολικού ποσού εξόδων[cite: 1]
       const sum = fetchedTransactions.reduce((acc: number, curr: any) => acc + (curr.amount || 0), 0);
       
       setExpenses(sortedExpenses);

@@ -12,6 +12,7 @@ import { database } from '../../database';
 import { useAppStore } from '../../store/useAppStore';
 import { RootStackParamList } from '../../navigation/types';
 import TripModel from '../../database/models/Trip';
+import { Q } from '@nozbe/watermelondb';
 
 // Components Imports
 import TripsHeader from './components/TripsHeader';
@@ -46,13 +47,16 @@ export default function TripsScreen() {
       setLoading(true);
       const fetchedTrips = (await database.get('trips').query().fetch()) as TripModel[];
       
-      // 🛠️ ΔΙΟΡΘΩΣΗ: Φορτώνουμε τις συναλλαγές για κάθε ταξίδι και υπολογίζουμε το totalExpenses
+      // 🛠️ ΔΙΟΡΘΩΣΗ: Φορτώνουμε τα έξοδα χρησιμοποιώντας Q.like για το stringified JSON
       const tripsWithExpenses = await Promise.all(
         fetchedTrips.map(async (trip) => {
-          const txs = await trip.transactions.fetch();
+          const txs = await database.get('transactions').query(
+            Q.where('type', 'expense'),
+            Q.where('trip_id', Q.like(`%${trip.id}%`))
+          ).fetch();
+
           const totalExpenses = txs.reduce((sum: number, tx: any) => sum + (tx.amount || 0), 0);
           
-          // Ορίζουμε με ασφάλεια το property totalExpenses πάνω στο instance του μοντέλου
           Object.defineProperty(trip, 'totalExpenses', {
             value: totalExpenses,
             writable: true,
@@ -65,7 +69,6 @@ export default function TripsScreen() {
 
       const now = new Date().getTime();
 
-      // ΕΞΥΠΝΗ & ΑΣΦΑΛΗΣ ΤΑΞΙΝΟΜΗΣΗ
       const sortedTrips = tripsWithExpenses.sort((a: any, b: any) => {
         const startA = a.startDate ? new Date(a.startDate).getTime() : 0;
         const endA = a.endDate ? new Date(a.endDate).getTime() : 0;
