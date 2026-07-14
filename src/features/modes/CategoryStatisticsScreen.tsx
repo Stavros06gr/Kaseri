@@ -56,61 +56,112 @@ export default function CategoryStatisticsScreen() {
   const [monthlyTotals, setMonthlyTotals] = useState<number[]>(new Array(12).fill(0));
   const [loading, setLoading] = useState(true);
 
-  // Διαθέσιμα έτη για φιλτράρισμα
-  const availableYears = [
-    new Date().getFullYear(),
-    new Date().getFullYear() - 1,
-    new Date().getFullYear() - 2
-  ];
+  // Δυναμικό State για τα διαθέσιμα έτη
+  const [availableYears, setAvailableYears] = useState<number[]>([new Date().getFullYear()]);
 
+  // 1. Φόρτωση όλων των διαθέσιμων ετών (τρέχει μόνο στο focus της οθόνης)
   useEffect(() => {
     if (isFocused) {
-      loadInitialData();
+      loadAvailableYears();
     }
   }, [isFocused]);
 
+  // 2. Φόρτωση κατηγοριών για το επιλεγμένο έτος (τρέχει όταν αλλάζει το έτος)
   useEffect(() => {
-    if (isFocused && selectedCategory) {
+    if (isFocused && selectedYear) {
+      loadCategoriesForYear(selectedYear);
+    }
+  }, [selectedYear, isFocused]);
+
+  // 3. Υπολογισμός στατιστικών (τρέχει όταν αλλάζει η κατηγορία ή το έτος)
+  useEffect(() => {
+    if (isFocused && selectedCategory && selectedYear) {
       calculateStats();
     }
   }, [selectedCategory, selectedYear, isFocused]);
 
-  // Φόρτωση μοναδικών κατηγοριών από τις συναλλαγές εξόδων
-  const loadInitialData = async () => {
+  // Βρίσκει όλα τα έτη που έχουν έστω και μία εγγραφή εξόδου
+  const loadAvailableYears = async () => {
     try {
       setLoading(true);
-      // Παίρνουμε όλες τις συναλλαγές τύπου 'expense'
       const allExpenses = (await database.get('transactions')
         .query(Q.where('type', 'expense'))
         .fetch()) as TransactionModel[];
 
-      // Εξαγωγή μοναδικών κατηγοριών
-      const uniqueCats = Array.from(
-        new Set(allExpenses.map(tx => tx.category).filter(Boolean))
-      ) as string[];
+      const uniqueYears = Array.from(
+        new Set(allExpenses.map(tx => new Date(tx.date).getFullYear()))
+      ).filter(Boolean) as number[];
 
-      setCategories(uniqueCats);
+      uniqueYears.sort((a, b) => b - a);
 
-      if (uniqueCats.length > 0 && !selectedCategory) {
-        setSelectedCategory(uniqueCats[0]);
-      } else if (uniqueCats.length === 0) {
-        setLoading(false);
+      const finalYears = uniqueYears.length > 0 ? uniqueYears : [new Date().getFullYear()];
+      setAvailableYears(finalYears);
+
+      if (!finalYears.includes(selectedYear)) {
+        setSelectedYear(finalYears[0]);
       }
     } catch (error) {
-      console.error('Failed to load initial stats data:', error);
+      console.error('Failed to load years:', error);
+    } finally {
       setLoading(false);
     }
   };
 
-  // Υπολογισμός στατιστικών & κατανομής ανά μήνα
+  // 🛠️ Φορτώνει ΜΟΝΟ τις κατηγορίες του επιλεγμένου έτους και τις ταξινομεί ΑΛΦΑΒΗΤΙΚΑ
+  const loadCategoriesForYear = async (year: number) => {
+    try {
+      setLoading(true);
+
+      const startOfYear = new Date(year, 0, 1).getTime();
+      const endOfYear = new Date(year, 11, 31, 23, 59, 59).getTime();
+
+      // Παίρνουμε τα έξοδα μόνο για το συγκεκριμένο έτος
+      const yearExpenses = (await database.get('transactions')
+        .query(
+          Q.where('type', 'expense'),
+          Q.where('date', Q.between(startOfYear, endOfYear))
+        )
+        .fetch()) as TransactionModel[];
+
+      // Εξαγωγή μοναδικών κατηγοριών
+      const uniqueCats = Array.from(
+        new Set(yearExpenses.map(tx => tx.category).filter(Boolean))
+      ) as string[];
+
+      // 🛠️ Αλφαβητική ταξινόμηση ανάλογα με τη γλώσσα (Ελληνικά / Αγγλικά)
+      uniqueCats.sort((a, b) => 
+        a.localeCompare(b, language === 'gr' ? 'el' : 'en')
+      );
+
+      setCategories(uniqueCats);
+
+      if (uniqueCats.length > 0) {
+        // Αν η προηγούμενη επιλεγμένη κατηγορία υπάρχει στο νέο έτος, την κρατάμε.
+        // Αλλιώς, επιλέγουμε την πρώτη κατηγορία αλφαβητικά.
+        if (!uniqueCats.includes(selectedCategory)) {
+          setSelectedCategory(uniqueCats[0]);
+        }
+      } else {
+        setSelectedCategory('');
+        setTransactions([]);
+        setMonthlyTotals(new Array(12).fill(0));
+      }
+    } catch (error) {
+      console.error('Failed to load categories for year:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Υπολογισμός στατιστικών & κατανομής ανά μήνα για την επιλεγμένη κατηγορία
   const calculateStats = async () => {
+    if (!selectedCategory) return;
     try {
       setLoading(true);
 
       const startOfYear = new Date(selectedYear, 0, 1).getTime();
       const endOfYear = new Date(selectedYear, 11, 31, 23, 59, 59).getTime();
 
-      // Query για τα έξοδα της συγκεκριμένης κατηγορίας και του επιλεγμένου έτους
       const yearExpenses = (await database.get('transactions')
         .query(
           Q.where('type', 'expense'),
@@ -122,7 +173,6 @@ export default function CategoryStatisticsScreen() {
 
       setTransactions(yearExpenses);
 
-      // Υπολογισμός μηνιαίων συνόλων (0-11)
       const months = new Array(12).fill(0);
       yearExpenses.forEach(tx => {
         const dateObj = new Date(tx.date);
@@ -140,10 +190,9 @@ export default function CategoryStatisticsScreen() {
 
   // ⚡ ΥΠΟΛΟΓΙΣΜΟΙ METRICS
   const totalSpent = monthlyTotals.reduce((sum, val) => sum + val, 0);
-  const activeMonthsCount = monthlyTotals.filter(val => val > 0).length || 1;
-  const monthlyAverage = totalSpent / 12; // average across the full year
+  const monthlyAverage = totalSpent / 12;
 
-  // Εύρεση Μήνα Αιχμής (Max Spent)
+  // Εύρεση Μήνα Αιχμής
   const maxMonthValue = Math.max(...monthlyTotals);
   const maxMonthIndex = monthlyTotals.indexOf(maxMonthValue);
   const peakMonthName = maxMonthValue > 0 ? shortMonths[maxMonthIndex] : '-';
@@ -276,19 +325,17 @@ export default function CategoryStatisticsScreen() {
 
               <View style={styles.barChartContainer}>
                 {monthlyTotals.map((amount, index) => {
-                  // Υπολογισμός ποσοστιαίου ύψους της μπάρας με βάση το μέγιστο μήνα
                   const barHeightPercent = maxMonthValue > 0 ? (amount / maxMonthValue) * 100 : 0;
                   const isPeak = amount === maxMonthValue && amount > 0;
 
                   return (
                     <View key={index} style={styles.barColumn}>
-                      {/* Tooltip on long press or just simple display (optional) */}
                       <View style={styles.barWrapper}>
                         <View 
                           style={[
                             styles.actualBar, 
                             { 
-                              height: `${Math.max(barHeightPercent, 3)}%`, // minimum 3% height to keep a tiny line
+                              height: `${Math.max(barHeightPercent, 3)}%`,
                               backgroundColor: isPeak ? '#10B981' : (amount > 0 ? '#2563EB' : (isDark ? '#2D2D2D' : '#E5E7EB'))
                             }
                           ]} 
