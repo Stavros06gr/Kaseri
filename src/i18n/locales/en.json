@@ -17,7 +17,8 @@
     "cancel": "Cancel",
     "delete": "Delete",
     "total": "Total",
-    "all": "All"
+    "all": "All",
+    "saveChanges": "Save Changes"
   },
   "home": {
     "balance": "Total Balance",
@@ -213,7 +214,8 @@
     "nameRequired": "Please enter a subscription name",
     "invalidCycle": "Please enter a valid number of days",
     "deleteTitle": "Delete Subscription",
-    "deleteConfirm": "Are you sure you want to cancel tracking this subscription?"
+    "deleteConfirm": "Are you sure you want to cancel tracking this subscription?",
+    "editSub": "Edit Subscription"
   },
   "settings": {
     "language": "Language",

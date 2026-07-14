@@ -11,7 +11,7 @@ import {
   ArrowLeft, 
   Plus, 
   Trash2, 
-  Pencil, // 🛠️ Προσθήκη Icon για Edit
+  Pencil, 
   Calendar, 
   CreditCard, 
   Wallet, 
@@ -45,9 +45,9 @@ export default function SubscriptionManagerScreen() {
   const [wallets, setWallets] = useState<WalletModel[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Form States (Κοινά για Create & Edit)
+  // Form States (Common for Create & Edit)
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [editingSub, setEditingSub] = useState<any>(null); // 🛠️ State για να ξέρουμε αν κάνουμε edit
+  const [editingSub, setEditingSub] = useState<any>(null); 
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [billingCycle, setBillingCycle] = useState('30');
@@ -64,25 +64,65 @@ export default function SubscriptionManagerScreen() {
     }
   }, [isFocused]);
 
+  // ⚡ ΕΞΥΠΝΗ ΦΟΡΤΩΣΗ: Φόρτωση, έλεγχος ληγμένων και αυτόματο rollover ημερομηνίας[cite: 1]
   const loadData = async () => {
     try {
       setLoading(true);
-      const subs = await database.get('subscriptions').query().fetch();
-      setSubscriptions(subs);
+      
+      // 1. Φόρτωση όλων των συνδρομών
+      const subs = (await database.get('subscriptions').query().fetch()) as SubscriptionModel[];
 
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0); // Σημερινή έναρξη ημέρας για σωστό calculation
+
+      // Φιλτράρισμα για το αν υπάρχουν ληγμένες συνδρομές (nextBillingDate < σήμερα)
+      const expiredSubs = subs.filter(sub => {
+        if (!sub.nextBillingDate) return false;
+        const nextDate = new Date(sub.nextBillingDate);
+        return nextDate.getTime() < todayStart.getTime();
+      });
+
+      // 2. AUTO-ROLLOVER: Αν βρεθούν ληγμένες, τις ανανεώνουμε αυτόματα στη βάση[cite: 1]
+      if (expiredSubs.length > 0) {
+        await database.write(async () => {
+          for (const sub of expiredSubs) {
+            const cycle = sub.billingCycle || (sub as any).billing_cycle || 30;
+            let tempDate = new Date(sub.nextBillingDate);
+            tempDate.setHours(0, 0, 0, 0);
+
+            // Προσθέτουμε κύκλους ημερών μέχρι η ημερομηνία να έρθει στο παρόν ή μέλλον[cite: 1]
+            while (tempDate.getTime() < todayStart.getTime()) {
+              tempDate.setDate(tempDate.getDate() + cycle);
+            }
+
+            // Ενημέρωση WatermelonDB
+            await sub.update((s: any) => {
+              s.nextBillingDate = tempDate.getTime();
+            });
+          }
+        });
+
+        // Επαναφόρτωση των ανανεωμένων συνδρομών
+        const updatedSubs = await database.get('subscriptions').query().fetch();
+        setSubscriptions(updatedSubs);
+      } else {
+        setSubscriptions(subs);
+      }
+
+      // 3. Φόρτωση Πορτοφολιών
       const walletRecords = (await database.get('wallets').query().fetch()) as WalletModel[];
       setWallets(walletRecords);
       if (walletRecords.length > 0 && !selectedWalletId) {
         setSelectedWalletId(walletRecords[0].id);
       }
     } catch (error) {
-      console.error('Failed to load subscriptions data:', error);
+      console.error('Failed to load/auto-renew subscriptions:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  // ⚡ Υπολογισμός Μηνιαίου Κόστους (χωρίς καμία αφαίρεση από wallets)
+  // ⚡ Υπολογισμός Μηνιαίου Κόστους (χωρίς καμία αφαίρεση από wallets)[cite: 1]
   const totalMonthlyCost = subscriptions.reduce((sum, sub) => {
     const cost = sub.price || 0;
     const cycle = sub.billingCycle || (sub as any).billing_cycle || 30;
@@ -92,7 +132,7 @@ export default function SubscriptionManagerScreen() {
 
   const displayMonthlyCost = hideBalance ? '****' : `${formatMoney(totalMonthlyCost)} ${currency}`;
 
-  // 🛠️ Άνοιγμα Form για Δημιουργία
+  // Άνοιγμα Form για Δημιουργία
   const handleOpenCreate = () => {
     setEditingSub(null);
     setName('');
@@ -103,7 +143,7 @@ export default function SubscriptionManagerScreen() {
     setIsModalVisible(true);
   };
 
-  // 🛠️ Άνοιγμα Form για Επεξεργασία (Edit)
+  // Άνοιγμα Form για Επεξεργασία (Edit)[cite: 1]
   const handleOpenEdit = (sub: any) => {
     setEditingSub(sub);
     setName(sub.name || '');
@@ -114,7 +154,7 @@ export default function SubscriptionManagerScreen() {
     setIsModalVisible(true);
   };
 
-  // 🛠️ Ενιαία Αποθήκευση (Create / Update)
+  // Ενιαία Αποθήκευση (Create / Update)[cite: 1]
   const handleSaveSubscription = async () => {
     const parsedPrice = parseFloat(price);
     const parsedCycle = parseInt(billingCycle);
@@ -138,24 +178,29 @@ export default function SubscriptionManagerScreen() {
 
     try {
       setIsSaving(true);
+      
+      // Κανονικοποίηση ημερομηνίας στις 00:00:00 για αποφυγή microsecond bugs
+      const normalizedDate = new Date(nextBillingDate);
+      normalizedDate.setHours(0, 0, 0, 0);
+
       await database.write(async () => {
         if (editingSub) {
-          // 🟢 UPDATE Υπάρχουσας Συνδρομής
+          // UPDATE Υπάρχουσας[cite: 1]
           const subToUpdate = await database.get('subscriptions').find(editingSub.id);
           await subToUpdate.update((sub: any) => {
             sub.name = name.trim();
             sub.price = parsedPrice;
             sub.billingCycle = parsedCycle;
-            sub.nextBillingDate = nextBillingDate.getTime();
+            sub.nextBillingDate = normalizedDate.getTime();
             sub.walletId = selectedWalletId;
           });
         } else {
-          // 🔵 CREATE Νέας Συνδρομής
+          // CREATE Νέας[cite: 1]
           await database.get('subscriptions').create((sub: any) => {
             sub.name = name.trim();
             sub.price = parsedPrice;
             sub.billingCycle = parsedCycle;
-            sub.nextBillingDate = nextBillingDate.getTime();
+            sub.nextBillingDate = normalizedDate.getTime();
             sub.walletId = selectedWalletId;
           });
         }
@@ -170,6 +215,7 @@ export default function SubscriptionManagerScreen() {
     }
   };
 
+  // Οριστική Διαγραφή
   const handleDeleteSubscription = async (sub: any) => {
     Alert.alert(
       t('subs.deleteTitle', 'Delete Subscription'),
@@ -274,6 +320,7 @@ export default function SubscriptionManagerScreen() {
                   </View>
                 </View>
 
+                {/* 🛠️ Διορθωμένο Divider import[cite: 1] */}
                 <Divider style={[styles.divider, { backgroundColor: borderColor }]} />
 
                 <View style={styles.cardFooter}>
@@ -286,7 +333,7 @@ export default function SubscriptionManagerScreen() {
                     </Text>
                   </View>
 
-                  {/* ACTION BUTTONS (Edit & Delete) */}
+                  {/* ACTION BUTTONS (Edit & Delete)[cite: 1] */}
                   <View style={styles.actionButtons}>
                     <TouchableOpacity onPress={() => handleOpenEdit(item)} style={styles.actionBtn} hitSlop={10}>
                       <Pencil size={15} color={isDark ? '#60A5FA' : '#2563EB'} />
@@ -304,7 +351,7 @@ export default function SubscriptionManagerScreen() {
 
       </ScrollView>
 
-      {/* ADD / EDIT SUBSCRIPTION DIALOG */}
+      {/* ADD / EDIT SUBSCRIPTION DIALOG[cite: 1] */}
       <Portal>
         <Dialog visible={isModalVisible} onDismiss={() => setIsModalVisible(false)} style={{ backgroundColor: cardBg, borderRadius: 24 }}>
           <Dialog.Title style={{ color: textColor, fontWeight: '800' }}>
