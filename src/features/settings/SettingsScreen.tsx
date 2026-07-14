@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { StyleSheet, View, ScrollView, TextInput, Alert } from 'react-native';
-import { Text, Surface, Switch } from 'react-native-paper';
+import { Text, Surface, Switch, Portal, Dialog, RadioButton, Button } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { 
@@ -10,6 +10,19 @@ import {
 import { useAppStore } from '../../store/useAppStore';
 import SettingOptionRow from './components/SettingOptionRow';
 import BackupControls from './components/BackupControls';
+
+// 🛠️ 1. ΛΙΣΤΑ ΥΠΟΣΤΗΡΙΖΟΜΕΝΩΝ ΓΛΩΣΣΩΝ (Με τις νέες προσθήκες)
+// 🛠️ Προσθήκη του "as const" στο τέλος για να κλειδώσουν οι τύποι
+const LANGUAGES = [
+  { code: 'en', label: 'English', i18nCode: 'en' },
+  { code: 'gr', label: 'Ελληνικά', i18nCode: 'el' },
+  { code: 'de', label: 'Deutsch', i18nCode: 'de' },
+  { code: 'es', label: 'Español', i18nCode: 'es' },
+  { code: 'pt', label: 'Português', i18nCode: 'pt' },
+] as const;
+
+// 🛠️ 2. ΔΙΕΥΡΥΜΕΝΗ ΛΙΣΤΑ ΝΟΜΙΣΜΑΤΩΝ
+const CURRENCIES = ['€', '$', '£', '¥', 'CHF', 'R$'];
 
 export default function SettingsScreen() {
   const { t, i18n } = useTranslation();
@@ -27,18 +40,29 @@ export default function SettingsScreen() {
   const isDark = theme === 'dark';
   const [apiKeyInput, setApiKeyInput] = useState(trading212Key || '');
 
-  const handleLanguageChange = () => {
-    const nextLang = language === 'gr' ? 'en' : 'gr';
-    const i18nCode = nextLang === 'gr' ? 'el' : 'en';
-    i18n.changeLanguage(i18nCode);
-    setLanguage(nextLang);
+  // Modals States
+  const [langModalVisible, setLangModalVisible] = useState(false);
+  const [currencyModalVisible, setCurrencyModalVisible] = useState(false);
+
+  // 🛠️ 3. ΕΞΥΠΝΟΣ ΧΕΙΡΙΣΜΟΣ ΓΛΩΣΣΑΣ
+  const handleLanguageSelect = (code: string) => {
+    const selected = LANGUAGES.find(l => l.code === code);
+    if (selected) {
+      i18n.changeLanguage(selected.i18nCode);
+      setLanguage(code as any);
+    }
+    setLangModalVisible(false);
   };
 
-  const handleCurrencyChange = () => {
-    const currencies = ['€', '$', '£'];
-    const currentIndex = currencies.indexOf(currency);
-    const nextIndex = (currentIndex + 1) % currencies.length;
-    setCurrency(currencies[nextIndex]);
+  // 🛠️ 4. ΕΞΥΠΝΟΣ ΧΕΙΡΙΣΜΟΣ ΝΟΜΙΣΜΑΤΟΣ
+  const handleCurrencySelect = (val: string) => {
+    setCurrency(val);
+    setCurrencyModalVisible(false);
+  };
+
+  const getLanguageLabel = () => {
+    const found = LANGUAGES.find(l => l.code === language);
+    return found ? found.label : 'English';
   };
 
   const saveApiKey = () => {
@@ -62,112 +86,173 @@ export default function SettingsScreen() {
   };
 
   return (
-    <ScrollView 
-      style={[styles.container, dynamicStyles.bg]} 
-      contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 16 }]}
-    >
-      {/* SCREEN TITLE */}
-      <Text style={[styles.screenTitle, dynamicStyles.textMain]}>
-        {t('navigation.settings', 'Settings')}
-      </Text>
+    <View style={{ flex: 1 }}>
+      <ScrollView 
+        style={[styles.container, dynamicStyles.bg]} 
+        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 16 }]}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* SCREEN TITLE */}
+        <Text style={[styles.screenTitle, dynamicStyles.textMain]}>
+          {t('navigation.settings', 'Settings')}
+        </Text>
 
-      {/* SECTION 1: PREFERENCES */}
-      <Text style={[styles.sectionLabel, dynamicStyles.textMuted]}>
-        {t('settings.preferences', 'Preferences')}
-      </Text>
-      <Surface style={[styles.groupCard, dynamicStyles.card]} mode="flat">
-        <SettingOptionRow
-          icon={<Languages size={20} color="#6B7280" />}
-          title={t('settings.language', 'Language')}
-          value={language === 'gr' ? 'Ελληνικά' : 'English'}
-          onPress={handleLanguageChange}
-          isDark={isDark}
-        />
-        <View style={[styles.innerDivider, dynamicStyles.divider]} />
-        <SettingOptionRow
-          icon={<Coins size={20} color="#6B7280" />}
-          title={t('settings.currency', 'Currency')}
-          value={currency}
-          onPress={handleCurrencyChange}
-          isDark={isDark}
-        />
-        <View style={[styles.innerDivider, dynamicStyles.divider]} />
-        <SettingOptionRow
-          icon={<Moon size={20} color="#6B7280" />}
-          title={t('settings.theme', 'Theme')}
-          rightElement={
-            <Switch 
-              value={isDark} 
-              onValueChange={(val) => setTheme(val ? 'dark' : 'light')} 
-            />
-          }
-          isDark={isDark}
-        />
-      </Surface>
+        {/* SECTION 1: PREFERENCES */}
+        <Text style={[styles.sectionLabel, dynamicStyles.textMuted]}>
+          {t('settings.preferences', 'Preferences')}
+        </Text>
+        <Surface style={[styles.groupCard, dynamicStyles.card]} mode="flat">
+          <SettingOptionRow
+            icon={<Languages size={20} color="#6B7280" />}
+            title={t('settings.language', 'Language')}
+            value={getLanguageLabel()}
+            onPress={() => setLangModalVisible(true)} // 👈 Άνοιγμα Modal
+            isDark={isDark}
+          />
+          <View style={[styles.innerDivider, dynamicStyles.divider]} />
+          <SettingOptionRow
+            icon={<Coins size={20} color="#6B7280" />}
+            title={t('settings.currency', 'Currency')}
+            value={currency}
+            onPress={() => setCurrencyModalVisible(true)} // 👈 Άνοιγμα Modal
+            isDark={isDark}
+          />
+          <View style={[styles.innerDivider, dynamicStyles.divider]} />
+          <SettingOptionRow
+            icon={<Moon size={20} color="#6B7280" />}
+            title={t('settings.theme', 'Theme')}
+            rightElement={
+              <Switch 
+                value={isDark} 
+                onValueChange={(val) => setTheme(val ? 'dark' : 'light')} 
+              />
+            }
+            isDark={isDark}
+          />
+        </Surface>
 
-      {/* SECTION 2: SECURITY & API */}
-      <Text style={[styles.sectionLabel, dynamicStyles.textMuted]}>
-        {t('settings.securityAndIntegrations', 'Security & Integrations')}
-      </Text>
-      <Surface style={[styles.groupCard, dynamicStyles.card]} mode="flat">
-        <SettingOptionRow
-          icon={<Fingerprint size={20} color="#6B7280" />}
-          title={t('settings.fingerprint', 'Fingerprint Authentication')}
-          rightElement={
-            <Switch 
-              value={biometricsEnabled} 
-              onValueChange={toggleBiometrics} 
+        {/* SECTION 2: SECURITY & API */}
+        <Text style={[styles.sectionLabel, dynamicStyles.textMuted]}>
+          {t('settings.securityAndIntegrations', 'Security & Integrations')}
+        </Text>
+        <Surface style={[styles.groupCard, dynamicStyles.card]} mode="flat">
+          <SettingOptionRow
+            icon={<Fingerprint size={20} color="#6B7280" />}
+            title={t('settings.fingerprint', 'Fingerprint Authentication')}
+            rightElement={
+              <Switch 
+                value={biometricsEnabled} 
+                onValueChange={toggleBiometrics} 
+              />
+            }
+            isDark={isDark}
+          />
+          <View style={[styles.innerDivider, dynamicStyles.divider]} />
+          
+          <View style={styles.apiInputContainer}>
+            <View style={styles.apiHeaderRow}>
+              <KeyRound size={20} color="#6B7280" style={{ marginRight: 14 }} />
+              <Text style={[styles.apiTitle, dynamicStyles.textMain]}>
+                {t('settings.trading212', 'Trading212 API Key')}
+              </Text>
+            </View>
+            <TextInput
+              style={[styles.input, dynamicStyles.input]}
+              value={apiKeyInput}
+              onChangeText={setApiKeyInput}
+              placeholder={t('settings.apiKeyPlaceholder', 'Paste your API key here')}
+              placeholderTextColor="#9CA3AF"
+              secureTextEntry
+              returnKeyType="done"
+              onEndEditing={saveApiKey}
             />
-          }
-          isDark={isDark}
-        />
-        <View style={[styles.innerDivider, dynamicStyles.divider]} />
-        
-        <View style={styles.apiInputContainer}>
-          <View style={styles.apiHeaderRow}>
-            <KeyRound size={20} color="#6B7280" style={{ marginRight: 14 }} />
+          </View>
+        </Surface>
+
+        {/* SECTION 3: DATA MANAGEMENT */}
+        <Text style={[styles.sectionLabel, dynamicStyles.textMuted]}>
+          {t('settings.dataManagement', 'Data Management')}
+        </Text>
+        <Surface style={[styles.groupCard, dynamicStyles.card]} mode="flat">
+          <View style={styles.backupHeaderRow}>
+            <Database size={20} color="#6B7280" style={{ marginRight: 14 }} />
             <Text style={[styles.apiTitle, dynamicStyles.textMain]}>
-              {t('settings.trading212', 'Trading212 API Key')}
+              {t('settings.backupAndRestore', 'Local Backup & Restore')}
             </Text>
           </View>
-          <TextInput
-            style={[styles.input, dynamicStyles.input]}
-            value={apiKeyInput}
-            onChangeText={setApiKeyInput}
-            placeholder={t('settings.apiKeyPlaceholder', 'Paste your API key here')}
-            placeholderTextColor="#9CA3AF"
-            secureTextEntry
-            returnKeyType="done"
-            onEndEditing={saveApiKey}
+          <BackupControls
+            onBackup={() => Alert.alert(
+              t('settings.backupTitle', 'Backup'), 
+              t('settings.backupSuccess', 'Local backup created successfully.')
+            )}
+            onRestore={() => Alert.alert(
+              t('settings.restoreTitle', 'Restore'), 
+              t('settings.restoreSuccess', 'Data restored successfully.')
+            )}
+            isDark={isDark}
           />
-        </View>
-      </Surface>
+        </Surface>
+      </ScrollView>
 
-      {/* SECTION 3: DATA MANAGEMENT */}
-      <Text style={[styles.sectionLabel, dynamicStyles.textMuted]}>
-        {t('settings.dataManagement', 'Data Management')}
-      </Text>
-      <Surface style={[styles.groupCard, dynamicStyles.card]} mode="flat">
-        <View style={styles.backupHeaderRow}>
-          <Database size={20} color="#6B7280" style={{ marginRight: 14 }} />
-          <Text style={[styles.apiTitle, dynamicStyles.textMain]}>
-            {t('settings.backupAndRestore', 'Local Backup & Restore')}
-          </Text>
-        </View>
-        <BackupControls
-          onBackup={() => Alert.alert(
-            t('settings.backupTitle', 'Backup'), 
-            t('settings.backupSuccess', 'Local backup created successfully.')
-          )}
-          onRestore={() => Alert.alert(
-            t('settings.restoreTitle', 'Restore'), 
-            t('settings.restoreSuccess', 'Data restored successfully.')
-          )}
-          isDark={isDark}
-        />
-      </Surface>
+      {/* 🛠️ 5. PORTAL DIALOGS ΓΙΑ ΜΗΔΕΝΙΚΟ CLIPPING */}
+      <Portal>
+        {/* LANGUAGE DIALOG */}
+        <Dialog 
+          visible={langModalVisible} 
+          onDismiss={() => setLangModalVisible(false)}
+          style={{ backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF', borderRadius: 24 }}
+        >
+          <Dialog.Title style={{ color: dynamicStyles.textMain.color, fontSize: 18, fontWeight: '700' }}>
+            {t('settings.selectLanguage', 'Select Language')}
+          </Dialog.Title>
+          <Dialog.Content>
+            <RadioButton.Group onValueChange={handleLanguageSelect} value={language}>
+              {LANGUAGES.map((lang) => (
+                <View key={lang.code} style={styles.radioRow}>
+                  <RadioButton.Android value={lang.code} color="#2563EB" uncheckedColor="#9CA3AF" />
+                  <Text style={[styles.radioLabel, { color: dynamicStyles.textMain.color }]}>
+                    {lang.label}
+                  </Text>
+                </View>
+              ))}
+            </RadioButton.Group>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setLangModalVisible(false)} textColor="#2563EB" labelStyle={{ fontWeight: '700' }}>
+              {t('common.cancel', 'Cancel')}
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
 
-    </ScrollView>
+        {/* CURRENCY DIALOG */}
+        <Dialog 
+          visible={currencyModalVisible} 
+          onDismiss={() => setCurrencyModalVisible(false)}
+          style={{ backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF', borderRadius: 24 }}
+        >
+          <Dialog.Title style={{ color: dynamicStyles.textMain.color, fontSize: 18, fontWeight: '700' }}>
+            {t('settings.selectCurrency', 'Select Currency')}
+          </Dialog.Title>
+          <Dialog.Content>
+            <RadioButton.Group onValueChange={handleCurrencySelect} value={currency}>
+              {CURRENCIES.map((cur) => (
+                <View key={cur} style={styles.radioRow}>
+                  <RadioButton.Android value={cur} color="#2563EB" uncheckedColor="#9CA3AF" />
+                  <Text style={[styles.radioLabel, { color: dynamicStyles.textMain.color }]}>
+                    {cur} ({cur === '€' ? 'EUR' : cur === '$' ? 'USD' : cur === '£' ? 'GBP' : cur === '¥' ? 'JPY' : cur === 'CHF' ? 'CHF' : 'BRL'})
+                  </Text>
+                </View>
+              ))}
+            </RadioButton.Group>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setCurrencyModalVisible(false)} textColor="#2563EB" labelStyle={{ fontWeight: '700' }}>
+              {t('common.cancel', 'Cancel')}
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+    </View>
   );
 }
 
@@ -228,5 +313,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     paddingTop: 4,
     marginBottom: 10,
+  },
+  // Radio Styles
+  radioRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  radioLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+    marginLeft: 12,
   },
 });
