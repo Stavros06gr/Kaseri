@@ -1,4 +1,5 @@
-import './i18n'; 
+import React, { useEffect } from 'react';
+import i18n from './i18n'; // Εισαγωγή του i18n instance της εφαρμογής
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View } from 'react-native';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
@@ -33,8 +34,18 @@ const customDarkTheme = {
 };
 
 export default function App() {
-  const { theme } = useAppStore();
+  const { theme, language } = useAppStore();
   const isDark = theme === 'dark';
+
+  // Συγχρονισμός της γλώσσας του i18next με το Zustand store κατά την εκκίνηση
+  useEffect(() => {
+    // Μετατρέπουμε το 'gr' του store στο 'el' που έχεις ορίσει στο i18n config
+    const i18nCode = language === 'gr' ? 'el' : 'en';
+    
+    if (i18n.language !== i18nCode) {
+      i18n.changeLanguage(i18nCode);
+    }
+  }, [language]);
 
   // Επιλογή των κατάλληλων themes βάσει του Zustand state
   const activeNavTheme = isDark ? customDarkTheme : customLightTheme;
