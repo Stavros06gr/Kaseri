@@ -6,19 +6,29 @@
     "newArchEnabled": false,
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
+    "splash": { 
+      "image": "./assets/images/cheese.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F9FAFB",
+      "dark": {
+        "image": "./assets/images/cheese.png",
+        "backgroundColor": "#121212"
+      }
+    },
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/cheese.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundImage": "./assets/images/icon.png",
+        "monochromeImage": "./assets/images/icon.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.Kaseri"
+      "package": "com.stavros.Kaseri",
+      "versionCode": 1
     },
     "web": {
       "favicon": "./assets/images/icon.png"
