@@ -75,7 +75,7 @@ export default function SavingTransferScreen() {
         if (!goalLastUsed.has(tr.savingGoalId)) goalLastUsed.set(tr.savingGoalId, tr.date ? new Date(tr.date).getTime() : 0);
       });
 
-      // 🛠️ Ταξινόμηση Wallets: Πρόσφατα -> Αλφαβητικά
+      // Ταξινόμηση Wallets: Πρόσφατα -> Αλφαβητικά
       const sortedWallets = fetchedWallets.sort((a, b) => {
         const timeA = walletLastUsed.get(a.id) || 0;
         const timeB = walletLastUsed.get(b.id) || 0;
@@ -83,7 +83,7 @@ export default function SavingTransferScreen() {
         return a.name.localeCompare(b.name);
       });
 
-      // 🛠️ Ταξινόμηση Goals: Πρόσφατα -> Αλφαβητικά
+      // Ταξινόμηση Goals: Πρόσφατα -> Αλφαβητικά
       const sortedGoals = fetchedGoals.sort((a, b) => {
         const timeA = goalLastUsed.get(a.id) || 0;
         const timeB = goalLastUsed.get(b.id) || 0;
@@ -157,6 +157,8 @@ export default function SavingTransferScreen() {
           transfer.amount = parsedAmount;
           transfer.type = transferType;
           transfer.date = date;
+          /* 🛠️ ΔΙΟΡΘΩΣΗ: Αποθήκευση του επιλεγμένου Wallet ID στη SQLite */
+          transfer.walletId = selectedWalletId; 
         });
       });
 
@@ -255,8 +257,6 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   scrollContent: { paddingHorizontal: 20, paddingBottom: 40 },
   submitBtn: { height: 54, borderRadius: 18, justifyContent: 'center', marginTop: 14, elevation: 2 },
-  
-  /* 🛠️ ΜΕΓΙΣΤΗ ΕΝΤΑΣΗ: Ultra Bold κείμενο για το Save Button */
   submitBtnLabel: { 
     fontSize: 16, 
     fontWeight: '900', 

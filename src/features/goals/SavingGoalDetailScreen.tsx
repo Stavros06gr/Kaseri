@@ -13,6 +13,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { RootStackParamList } from '../../navigation/types';
 import { formatMoney } from '../../utils/math';
 import SavingGoalModel from '../../database/models/SavingGoal';
+import WalletModel from '../../database/models/Wallet'; // 👈 1. Εισαγωγή του Wallet Model
 
 // Components Imports
 import GoalDetailHeader from './components/GoalDetailHeader';
@@ -39,6 +40,7 @@ export default function SavingGoalDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [goal, setGoal] = useState<SavingGoalModel | null>(null);
   const [transfers, setTransfers] = useState<any[]>([]);
+  const [wallets, setWallets] = useState<WalletModel[]>([]); // 👈 2. State για τα πορτοφόλια
 
   useEffect(() => {
     if (isFocused) {
@@ -59,6 +61,10 @@ export default function SavingGoalDetailScreen() {
         return dateB - dateA;
       });
       setTransfers(sortedTransfers);
+
+      // 👈 3. Φόρτωση όλων των Πορτοφολιών για το Mapping των IDs σε Ονόματα
+      const walletRecords = (await database.get('wallets').query().fetch()) as WalletModel[];
+      setWallets(walletRecords);
     } catch (error) {
       console.error('Error fetching goal details:', error);
       Alert.alert('Error', t('goals.notFound', 'Goal not found'));
@@ -68,7 +74,6 @@ export default function SavingGoalDetailScreen() {
     }
   };
 
-  /* 🛠️ ΔΙΟΡΘΩΣΗ: Πλοήγηση στην οθόνη μεταφοράς αντί για Alert.prompt */
   const handleUpdateAmount = (type: 'deposit' | 'withdraw') => {
     navigation.navigate('SavingTransfer', { goalId: goalId, type: type });
   };
@@ -165,17 +170,29 @@ export default function SavingGoalDetailScreen() {
             </Text>
           </View>
         }
-        renderItem={({ item }) => (
-          <ContributionHistoryItem 
-            item={item}
-            cardBg={cardBg}
-            isDark={isDark}
-            subTextColor={subTextColor}
-            currentLocale={currentLocale}
-            currency={currency}
-            t={t}
-          />
-        )}
+        renderItem={({ item }) => {
+          // 👈 4. Εύρεση του συνδεδεμένου Wallet για τη συγκεκριμένη μεταφορά
+          const targetWalletId = 
+            item.walletId || 
+            item._raw?.wallet_id || 
+            item._raw?.walletId || 
+            (item as any).wallet_id;
+
+          const connectedWallet = wallets.find(w => w.id === targetWalletId);
+
+          return (
+            <ContributionHistoryItem 
+              item={item}
+              cardBg={cardBg}
+              isDark={isDark}
+              subTextColor={subTextColor}
+              currentLocale={currentLocale}
+              currency={currency}
+              t={t}
+              walletName={connectedWallet?.name} // 👈 5. Περνάμε το όνομα του Wallet ως prop
+            />
+          );
+        }}
       />
     </View>
   );
