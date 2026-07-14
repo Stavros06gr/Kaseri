@@ -217,6 +217,16 @@
     "deleteConfirm": "Are you sure you want to cancel tracking this subscription?",
     "editSub": "Edit Subscription"
   },
+  "stats": {
+    "title": "Category Statistics",
+    "noData": "No expense logs found to generate statistics.",
+    "totalSpent": "Total spent",
+    "monthlyAvg": "Monthly Average",
+    "peakMonth": "Highest Spending Month",
+    "annualDistribution": "Annual Distribution",
+    "recentTransactions": "Category Logs",
+    "noLogsYear": "No transactions recorded for this period."
+  },
   "settings": {
     "language": "Language",
     "currency": "Currency",

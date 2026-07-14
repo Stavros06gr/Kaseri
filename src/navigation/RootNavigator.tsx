@@ -25,6 +25,7 @@ import OwnScreen from '../features/modes/OwnScreen';
 import FuelCalculator from '../features/modes/FuelCalculator';
 import FuelConsumption from '../features/modes/FuelConsumptionScreen';
 import SubscriptionManager from '../features/modes/SubscriptionManagerScreen';
+import CategoryStatistics from '../features/modes/CategoryStatisticsScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -104,7 +105,7 @@ export default function RootNavigator() {
       <Stack.Screen name="FuelCalculator" component={FuelCalculator} />
       <Stack.Screen name="FuelConsumption" component={FuelConsumption} />
       <Stack.Screen name="SubscriptionManager" component={SubscriptionManager} />
-      <Stack.Screen name="CategoryStatistics" component={CategoryStatisticsDummy} />
+      <Stack.Screen name="CategoryStatistics" component={CategoryStatistics} />
     </Stack.Navigator>
   );
 }
