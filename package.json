@@ -34,9 +34,9 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
-    "@babel/plugin-proposal-decorators": "^8.0.2",
-    "@babel/plugin-transform-class-properties": "^8.0.1",
-    "@babel/plugin-transform-private-methods": "^8.0.1",
+    "@babel/plugin-proposal-decorators": "^7.29.7",
+    "@babel/plugin-transform-class-properties": "^7.29.7",
+    "@babel/plugin-transform-private-methods": "^7.29.7",
     "@types/big.js": "^7.0.0",
     "@types/react": "~19.2.2",
     "babel-preset-expo": "^57.0.2",

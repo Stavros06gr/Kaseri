@@ -2,12 +2,12 @@
   "expo": {
     "name": "Kaseri",
     "slug": "Kaseri",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "newArchEnabled": false,
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "automatic",
-    "splash": { 
+    "splash": {
       "image": "./assets/images/cheese.png",
       "resizeMode": "contain",
       "backgroundColor": "#F9FAFB",
@@ -32,6 +32,11 @@
     },
     "web": {
       "favicon": "./assets/images/icon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "68e06a4e-716e-446d-97d3-319f7485922c"
+      }
     }
   }
 }
